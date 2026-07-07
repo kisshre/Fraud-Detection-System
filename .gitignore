@@ -1,0 +1,45 @@
+<<<<<<< HEAD
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.env
+
+# Node
+node_modules/
+.next/
+dist/
+build/
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dataset
+dataset/*.csv
+
+# Python cache
+*.sqlite3
+
+# Environment
+.env.local
+.env.production
+=======
+node_modules/
+dataset/
+*.csv
+.env
+.next/
+dist/
+build/
+venv/
+__pycache__/
+>>>>>>> 4d0519c343af8d105e1bc4c69f7667c9ef395fc7

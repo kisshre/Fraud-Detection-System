@@ -1,0 +1,101 @@
+{
+  "name": "fraudx-desktop",
+  "version": "3.0.0",
+  "description": "FRAUD-X Enterprise Fraud Detection Platform — Desktop Application",
+  "main": "electron/main.js",
+  "author": "FRAUD-X Enterprise",
+  "license": "MIT",
+  "scripts": {
+    "start":          "electron .",
+    "dev":            "cross-env NODE_ENV=development electron .",
+    "build:frontend": "cd frontend && npm run build",
+    "build:electron": "electron-builder --win --x64",
+    "build:all":      "npm run build:frontend && npm run build:electron",
+    "pack":           "electron-builder --dir",
+    "dist":           "electron-builder",
+    "postinstall":    "electron-builder install-app-deps"
+  },
+  "dependencies": {
+    "electron-log":     "^5.2.0",
+    "electron-store":   "^8.2.0",
+    "electron-updater": "^6.3.4"
+  },
+  "devDependencies": {
+    "cross-env":        "^7.0.3",
+    "electron":         "^31.7.6",
+    "electron-builder": "^24.13.3",
+    "wait-on":          "^7.2.0"
+  },
+  "build": {
+    "appId":       "com.fraudx.enterprise.desktop",
+    "productName": "FRAUD-X",
+    "copyright":   "Copyright © 2025 FRAUD-X Enterprise",
+    "asar":        true,
+
+    "directories": {
+      "output":         "dist",
+      "buildResources": "assets"
+    },
+
+    "files": [
+      "electron/**/*",
+      "!node_modules/**/*"
+    ],
+
+    "extraResources": [
+      {
+        "from":   "frontend/.next/standalone/",
+        "to":     "frontend-server/",
+        "filter": ["**/*"]
+      },
+      {
+        "from":   "frontend/.next/static/",
+        "to":     "frontend-server/.next/static/",
+        "filter": ["**/*"]
+      },
+      {
+        "from":   "frontend/public/",
+        "to":     "frontend-server/public/",
+        "filter": ["**/*"]
+      },
+      {
+        "from":   "backend-dist/fraudx_backend/",
+        "to":     "backend/",
+        "filter": ["**/*"]
+      }
+    ],
+
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ],
+      "requestedExecutionLevel": "asInvoker",
+      "artifactName": "FRAUD-X-Setup-${version}.${ext}"
+    },
+
+    "nsis": {
+      "oneClick":                           false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut":             true,
+      "createStartMenuShortcut":           true,
+      "shortcutName":                      "FRAUD-X",
+      "differentialPackage":               false
+    },
+
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] }
+      ],
+      "category": "public.app-category.utilities"
+    },
+
+    "linux": {
+      "target": [
+        { "target": "AppImage", "arch": ["x64"] }
+      ],
+      "category": "Utility"
+    },
+
+    "publish": null
+  }
+}

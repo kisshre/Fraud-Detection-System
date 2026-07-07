@@ -1,0 +1,3403 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Fraud Detection System · Real-Time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:         #F8F9FB;
+  --surface:    #FFFFFF;
+  --surface2:   #F3F4F6;
+  --border:     #E5E7EB;
+  --border2:    #D1D5DB;
+  --text:       #111827;
+  --text2:      #374151;
+  --muted:      #6B7280;
+  --muted2:     #9CA3AF;
+  --accent:     #2563EB;
+  --accent-bg:  #EFF6FF;
+  --accent2:    #7C3AED;
+  --safe:       #059669;
+  --safe-bg:    #ECFDF5;
+  --safe-border:#A7F3D0;
+  --caution:    #D97706;
+  --caution-bg: #FFFBEB;
+  --caution-border:#FDE68A;
+  --danger:     #DC2626;
+  --danger-bg:  #FEF2F2;
+  --danger-border:#FECACA;
+  --shadow-sm:  0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow:     0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  --shadow-lg:  0 10px 30px rgba(0,0,0,.1), 0 4px 8px rgba(0,0,0,.04);
+  --r:          10px;
+  --r-sm:       7px;
+  --r-lg:       14px;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  min-height:100vh;
+  background:var(--bg);
+  color:var(--text);
+  font-family:'DM Sans',sans-serif;
+  font-size:14.5px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Layout ── */
+.shell{display:flex;min-height:100vh}
+.right-panel{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+@media(max-width:900px){
+  .sidebar{display:none}
+}
+
+/* ── Sidebar ── */
+.sidebar{
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+  padding:0 0 20px;
+}
+.logo{
+  display:flex;align-items:center;gap:11px;
+  padding:20px 18px 18px;
+  border-bottom:1px solid var(--border);margin-bottom:6px;
+}
+.logo-mark{
+  width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  background:linear-gradient(135deg,#2563EB,#7C3AED);
+  display:grid;place-items:center;
+}
+.logo-mark svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round}
+.logo-name{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.2px}
+.logo-tag{font-size:11px;color:var(--muted);margin-top:0px}
+
+.nav-group{padding:14px 10px 4px}
+.nav-label{font-size:10.5px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.9px;padding:0 8px;margin-bottom:3px}
+.nav-btn{
+  display:flex;align-items:center;gap:9px;
+  width:100%;padding:8px 10px;border-radius:7px;
+  border:none;background:none;cursor:pointer;
+  color:var(--muted);font-size:13.5px;font-family:inherit;
+  font-weight:500;text-align:left;transition:all .15s;
+}
+.nav-btn:hover{background:var(--surface2);color:var(--text2)}
+.nav-btn.active{background:var(--accent-bg);color:var(--accent);font-weight:600}
+.nav-icon{width:28px;height:28px;border-radius:6px;display:grid;place-items:center;font-size:14px;flex-shrink:0}
+.nav-btn.active .nav-icon{background:rgba(37,99,235,.12)}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;display:none}
+.nav-badge.show{display:inline}
+
+.sidebar-foot{
+  margin-top:auto;padding:14px 18px 0;
+  border-top:1px solid var(--border);
+}
+.status-row{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--safe);flex-shrink:0}
+.dot.offline{background:var(--danger)}
+.dot.pulse{animation:pulse 2.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* ── Topbar ── */
+.topbar{
+  position:sticky;top:0;z-index:10;
+  background:rgba(248,249,251,.9);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  height:56px;padding:0 28px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.topbar-left{font-size:14px;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:8px}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.chip-stat{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);padding:5px 10px;border-radius:6px;border:1px solid var(--border)}
+.chip-stat strong{color:var(--text2)}
+
+/* ── Main ── */
+.main{flex:1;padding:24px 28px 48px;overflow-y:auto}
+@media(max-width:640px){.main{padding:14px}}
+
+/* ── Panes ── */
+.pane{display:none}
+.pane.active{display:block}
+.pane-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:3px}
+.pane-sub{font-size:13.5px;color:var(--muted);margin-bottom:20px}
+
+/* ── Stats row ── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:22px}
+.stat-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:14px 16px;
+  transition:box-shadow .2s;
+}
+.stat-box:hover{box-shadow:var(--shadow-sm)}
+.stat-box-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px}
+.stat-box-val{font-size:24px;font-weight:700;color:var(--text)}
+.stat-box.s-safe .stat-box-val{color:var(--safe)}
+.stat-box.s-caution .stat-box-val{color:var(--caution)}
+.stat-box.s-danger .stat-box-val{color:var(--danger)}
+.stat-box.s-accent .stat-box-val{color:var(--accent)}
+
+/* ── Card ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:20px 22px;
+  box-shadow:var(--shadow-sm);margin-bottom:16px;
+}
+.card-title{font-size:14.5px;font-weight:650;color:var(--text);margin-bottom:3px}
+.card-sub{font-size:13px;color:var(--muted);margin-bottom:14px}
+
+/* ── Fields ── */
+.field{margin-bottom:12px}
+.field label{display:block;font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:5px;letter-spacing:.2px}
+.inp{
+  width:100%;padding:9px 12px;
+  background:var(--surface);color:var(--text);
+  border:1px solid var(--border2);border-radius:var(--r-sm);
+  font-size:14px;font-family:inherit;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+  -webkit-appearance:none;
+  appearance:none;
+}
+.inp:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.inp::placeholder{color:var(--muted2)}
+textarea.inp{resize:vertical;min-height:90px;line-height:1.5}
+select.inp option{background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:560px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* ── Buttons ── */
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 18px;border-radius:var(--r-sm);
+  border:none;cursor:pointer;font-family:inherit;
+  font-size:13.5px;font-weight:600;letter-spacing:.1px;
+  transition:all .15s;
+}
+.btn-primary{
+  background:var(--accent);color:#fff;
+  box-shadow:0 2px 6px rgba(37,99,235,.3);
+}
+.btn-primary:hover{background:#1d4ed8;box-shadow:0 3px 10px rgba(37,99,235,.35);transform:translateY(-1px)}
+.btn-primary:active{transform:translateY(0)}
+.btn-ghost{background:var(--surface);color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--border2);background:var(--surface2)}
+.btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+.btn-danger:hover{background:var(--danger);color:#fff}
+.btn-sm{padding:6px 13px;font-size:12.5px}
+
+/* ── Example chips ── */
+.chip-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.echip{
+  padding:5px 11px;border-radius:6px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface2);
+  color:var(--text2);font-size:12px;font-weight:500;
+  transition:all .14s;white-space:nowrap;font-family:inherit;
+}
+.echip:hover{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.echip.bad:hover{border-color:var(--danger-border);background:var(--danger-bg);color:var(--danger)}
+.echip.ok:hover{border-color:var(--safe-border);background:var(--safe-bg);color:var(--safe)}
+
+/* ── Pipeline steps ── */
+.pipeline{
+  display:flex;gap:0;border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin:16px 0;
+}
+.pl{
+  flex:1;padding:12px 8px;text-align:center;
+  background:var(--surface2);border-right:1px solid var(--border);
+  transition:all .25s;position:relative;
+}
+.pl:last-child{border-right:none}
+.pl.run{background:var(--accent-bg)}
+.pl.run .pl-ico{animation:bounceIn .3s}
+.pl.done{background:var(--safe-bg)}
+.pl.done::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--safe)}
+@keyframes bounceIn{0%{transform:scale(.7)}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.pl-ico{font-size:18px;margin-bottom:3px;display:block}
+.pl-name{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+
+/* ── Result panel ── */
+.result{display:none;margin-top:16px;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.result.show{display:block}
+.result-top{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.result-body{padding:16px 18px;background:var(--surface)}
+
+/* Level badge */
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 11px;border-radius:999px;
+  font-size:11.5px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+}
+.badge.safe{background:var(--safe-bg);color:var(--safe);border:1px solid var(--safe-border)}
+.badge.caution{background:var(--caution-bg);color:var(--caution);border:1px solid var(--caution-border)}
+.badge.danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+
+/* Score */
+.score-big{font-size:32px;font-weight:800;line-height:1}
+.score-big.safe{color:var(--safe)}
+.score-big.caution{color:var(--caution)}
+.score-big.danger{color:var(--danger)}
+.score-row{display:flex;align-items:baseline;gap:4px;margin-bottom:3px}
+.score-denom{font-size:14px;color:var(--muted);font-weight:500}
+
+/* Meter */
+.meter{background:var(--surface2);border-radius:999px;height:8px;overflow:hidden;margin-bottom:14px;border:1px solid var(--border)}
+.meter-fill{height:100%;border-radius:999px;width:0%;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.meter-fill.safe{background:var(--safe)}
+.meter-fill.caution{background:var(--caution)}
+.meter-fill.danger{background:linear-gradient(90deg,var(--caution),var(--danger))}
+
+/* Reasons */
+.reasons{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.reason{
+  display:flex;align-items:flex-start;gap:9px;
+  padding:9px 12px;border-radius:var(--r-sm);
+  border:1px solid var(--border);background:var(--bg);
+  font-size:13px;color:var(--text2);line-height:1.45;
+}
+.reason-ic{font-size:13px;flex-shrink:0;margin-top:1px}
+
+/* AI block */
+.ai-box{
+  padding:11px 14px;
+  background:linear-gradient(135deg,rgba(37,99,235,.04),rgba(124,58,237,.04));
+  border:1px solid rgba(37,99,235,.18);border-radius:var(--r-sm);
+  margin-bottom:10px;
+}
+.ai-label{font-size:10.5px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.ai-text{font-size:13px;color:var(--text2);line-height:1.5}
+
+/* Rec box */
+.rec{
+  padding:11px 14px;
+  background:var(--accent-bg);border:1px solid rgba(37,99,235,.18);
+  border-radius:var(--r-sm);font-size:13px;color:var(--text2);line-height:1.5;
+}
+.rec.danger-rec{background:var(--danger-bg);border-color:var(--danger-border);color:#991b1b}
+.rec.caution-rec{background:var(--caution-bg);border-color:var(--caution-border);color:#92400e}
+.rec strong{font-weight:650}
+
+/* Hash */
+.hash-row{display:flex;align-items:center;gap:6px;margin-top:8px;font-size:11px;color:var(--muted2);font-family:'DM Mono',monospace}
+
+/* ── File drop zone ── */
+.dropzone{
+  border:2px dashed var(--border2);border-radius:var(--r);
+  padding:28px 20px;text-align:center;color:var(--muted);
+  background:var(--bg);cursor:pointer;transition:all .18s;
+}
+.dropzone:hover,.dropzone.drag{border-color:var(--accent);background:var(--accent-bg);color:var(--accent)}
+.dropzone .dz-ico{font-size:32px;margin-bottom:8px;display:block}
+.dropzone strong{display:block;color:var(--text2);font-size:14.5px;margin-bottom:3px}
+.dropzone small{font-size:12px}
+
+/* ── Table ── */
+.tbl-wrap{border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{
+  background:var(--surface2);padding:10px 14px;
+  text-align:left;font-size:10.5px;font-weight:700;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.7px;
+  border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1;
+}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr{transition:background .1s}
+tbody tr:hover{background:var(--surface2)}
+.td-trunc{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px}
+.td-mono{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted)}
+.kind-tag{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;
+  background:var(--surface2);color:var(--muted);text-transform:uppercase;letter-spacing:.4px;
+}
+
+/* ── Ledger ── */
+.ledger-item{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:12px 14px;border:1px solid var(--border);
+  border-radius:var(--r);margin-bottom:8px;background:var(--surface);
+  transition:border-color .15s;
+}
+.ledger-item:hover{border-color:var(--border2)}
+.block-num{
+  width:34px;height:34px;border-radius:7px;
+  background:var(--accent-bg);color:var(--accent);
+  display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0;
+}
+.block-meta{flex:1;min-width:0}
+.block-id{font-size:13px;color:var(--text2);margin-bottom:3px}
+.block-hash{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);word-break:break-all}
+.chain-arrow{text-align:center;color:var(--muted2);font-size:12px;margin:3px 0 3px 14px}
+.integrity-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;
+}
+.integrity-badge.ok{background:var(--safe-bg);color:var(--safe);border:1px solid var(--safe-border)}
+.integrity-badge.fail{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+
+/* ── Scanning animation ── */
+.scanning{display:flex;align-items:center;gap:8px;color:var(--accent);font-size:13px;padding:12px 0}
+.spin{animation:spin 1s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Empty states ── */
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty-ico{font-size:36px;margin-bottom:10px;display:block}
+.empty p{font-size:13px}
+
+/* ── Toast ── */
+#toast{
+  position:fixed;bottom:20px;right:20px;z-index:999;
+  padding:11px 16px;border-radius:var(--r);
+  font-size:13px;font-weight:600;
+  background:var(--surface);border:1px solid var(--border);
+  box-shadow:var(--shadow-lg);
+  opacity:0;transform:translateY(6px);
+  transition:opacity .2s,transform .2s;pointer-events:none;
+}
+#toast.show{opacity:1;transform:translateY(0)}
+
+/* ── Divider ── */
+.divider{height:1px;background:var(--border);margin:14px 0}
+.flex{display:flex;align-items:center;gap:10px}
+.spacer{flex:1}
+.text-muted{color:var(--muted);font-size:13px}
+.text-sm{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* ── XAI Explanation ── */
+.xai-section{margin-top:12px;border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.xai-header{background:var(--surface2);padding:9px 14px;display:flex;align-items:center;gap:7px;cursor:pointer;user-select:none}
+.xai-header-title{font-size:11.5px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.xai-body{padding:12px 14px;display:none}
+.xai-body.open{display:block}
+.xai-category{margin-bottom:10px}
+.xai-cat-label{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px;padding:2px 8px;border-radius:4px;display:inline-block}
+.xai-cat-label.critical{background:var(--danger-bg);color:var(--danger)}
+.xai-cat-label.high{background:#FEF3C7;color:#92400E}
+.xai-cat-label.medium{background:var(--caution-bg);color:var(--caution)}
+.xai-cat-label.low{background:var(--surface2);color:var(--muted)}
+.xai-cat-label.informational{background:var(--safe-bg);color:var(--safe)}
+.xai-signal{font-size:12px;color:var(--text2);padding:5px 10px;border-left:2px solid var(--border2);margin:3px 0;line-height:1.4}
+.xai-signal.critical{border-color:var(--danger)}
+.xai-signal.high{border-color:#F59E0B}
+.xai-signal.medium{border-color:var(--caution)}
+.xai-signal.informational{border-color:var(--safe)}
+.confidence-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.4px}
+.confidence-pill.high{background:#D1FAE5;color:#065F46}
+.confidence-pill.medium{background:#FEF3C7;color:#92400E}
+.confidence-pill.low{background:var(--surface2);color:var(--muted)}
+
+/* ── Charts ── */
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+@media(max-width:700px){.charts-grid{grid-template-columns:1fr}}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;box-shadow:var(--shadow-sm)}
+.chart-box-title{font-size:13px;font-weight:650;color:var(--text);margin-bottom:12px}
+.chart-canvas{max-height:220px}
+.behavior-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.beh-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.beh-card-label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px}
+.beh-card-val{font-size:22px;font-weight:700;color:var(--text)}
+.beh-card-sub{font-size:11px;color:var(--muted2);margin-top:2px}
+.baseline-table{width:100%;font-size:12.5px;border-collapse:collapse}
+.baseline-table th{text-align:left;padding:7px 10px;background:var(--surface2);font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border)}
+.baseline-table td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.baseline-table tr:last-child td{border-bottom:none}
+
+/* ── Filter bar ── */
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;padding:12px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--r)}
+.filter-inp{flex:1;min-width:90px;max-width:170px;padding:6px 10px;font-size:13px}
+.filter-inp.wide{max-width:220px}
+
+/* ── Pagination ── */
+.pagination{display:flex;align-items:center;gap:10px;padding:10px 0 2px;justify-content:flex-end}
+.pg-info{font-size:12px;color:var(--muted)}
+
+/* ── Dashboard ── */
+.dash-row{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:16px}
+@media(max-width:750px){.dash-row{grid-template-columns:1fr}}
+.feed-item{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--border)}
+.feed-item:last-child{border-bottom:none}
+.feed-score{min-width:38px;height:38px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:800;flex-shrink:0}
+.feed-score.danger{background:var(--danger-bg);color:var(--danger)}
+.feed-score.caution{background:var(--caution-bg);color:var(--caution)}
+.feed-score.safe{background:var(--safe-bg);color:var(--safe)}
+.feed-kind{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.feed-target{font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:250px}
+.feed-time{font-size:11px;color:var(--muted2);margin-top:2px}
+
+/* ── Score distribution inline bars ── */
+.dist-row{display:flex;align-items:center;gap:7px;margin-bottom:4px}
+.dist-lbl{font-size:11px;color:var(--muted);width:46px;text-align:right;flex-shrink:0;font-family:'DM Mono',monospace}
+.dist-track{flex:1;height:12px;background:var(--surface2);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.dist-fill{height:100%;border-radius:2px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+.dist-cnt{font-size:11px;color:var(--muted2);width:26px;text-align:right;flex-shrink:0}
+
+/* ── Notes modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:22px 24px;width:440px;max-width:calc(100vw - 32px);box-shadow:var(--shadow-lg)}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:6px}
+
+/* ── Table action buttons ── */
+.tbl-actions{display:flex;gap:4px}
+.btn-icon{padding:4px 7px;font-size:12px;line-height:1;border-radius:5px;border:1px solid var(--border);background:transparent;cursor:pointer;transition:all .12s;font-family:inherit}
+.btn-icon:hover{background:var(--surface2)}
+.btn-icon.del:hover{background:var(--danger-bg);border-color:var(--danger-border);color:var(--danger)}
+
+/* ── Real-time live ticker ── */
+#liveTicker{
+  background:linear-gradient(90deg,#1e1b4b,#312e81);
+  color:#e0e7ff;font-size:12px;font-weight:500;
+  display:flex;align-items:center;gap:0;
+  height:32px;overflow:hidden;position:relative;border-bottom:1px solid #4338CA;
+}
+#liveTicker.hidden{display:none}
+.ticker-live-badge{
+  flex-shrink:0;background:#EF4444;color:#fff;
+  font-size:10px;font-weight:800;letter-spacing:.6px;
+  padding:0 10px;height:100%;display:flex;align-items:center;
+  animation:tickerPulse 2s infinite;
+}
+@keyframes tickerPulse{0%,100%{background:#EF4444}50%{background:#DC2626}}
+.ticker-track{flex:1;overflow:hidden;height:100%;display:flex;align-items:center}
+.ticker-inner{white-space:nowrap;display:flex;align-items:center;gap:40px;
+  animation:tickerScroll 30s linear infinite;padding-left:20px}
+.ticker-inner:hover{animation-play-state:paused}
+@keyframes tickerScroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.ticker-item{display:inline-flex;align-items:center;gap:7px;opacity:.9}
+.ticker-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ticker-dot.danger{background:#F87171}
+.ticker-dot.caution{background:#FCD34D}
+.ticker-dot.safe{background:#6EE7B7}
+
+/* ── User menu in topbar ── */
+.user-menu{position:relative;display:flex;align-items:center}
+.user-avatar{
+  width:32px;height:32px;border-radius:50%;
+  background:linear-gradient(135deg,#2563EB,#7C3AED);
+  color:#fff;font-size:13px;font-weight:700;
+  display:grid;place-items:center;cursor:pointer;flex-shrink:0;
+  border:2px solid var(--border);
+}
+.user-avatar img{width:100%;height:100%;border-radius:50%;object-fit:cover}
+.user-dropdown{
+  position:absolute;top:calc(100% + 8px);right:0;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);box-shadow:var(--shadow);
+  min-width:180px;z-index:100;display:none;
+}
+.user-dropdown.open{display:block}
+.user-dd-name{padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);border-bottom:1px solid var(--border)}
+.user-dd-email{font-size:11px;color:var(--muted);font-weight:400;margin-top:1px}
+.user-dd-item{
+  display:flex;align-items:center;gap:8px;
+  padding:9px 14px;font-size:13px;color:var(--text2);cursor:pointer;
+  transition:background .1s;border:none;background:none;width:100%;
+  font-family:inherit;text-align:left;
+}
+.user-dd-item:hover{background:var(--surface2)}
+.user-dd-item.danger{color:var(--danger)}
+
+/* ── Feed item flash for new WS alerts ── */
+@keyframes feedFlash{
+  0%{background:rgba(37,99,235,.15)}
+  100%{background:transparent}
+}
+.feed-item.ws-new{animation:feedFlash 1.5s ease-out forwards}
+
+/* ── Stat box animate ── */
+@keyframes statBump{
+  0%{transform:scale(1)}
+  40%{transform:scale(1.12)}
+  100%{transform:scale(1)}
+}
+.stat-bump{animation:statBump .35s ease-out}
+
+/* ── Payment scanner pane ── */
+.pmt-result-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 14px;border-radius:999px;font-size:13px;font-weight:700;
+  margin-bottom:12px;
+}
+.pmt-result-badge.trusted{background:var(--safe-bg);color:var(--safe);border:1px solid var(--safe-border)}
+.pmt-result-badge.danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
+.pmt-result-badge.caution{background:var(--caution-bg);color:var(--caution);border:1px solid var(--caution-border)}
+.gateway-card{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border:1px solid var(--border);
+  border-radius:var(--r);background:var(--bg);margin-bottom:12px;
+}
+.gateway-icon{font-size:28px;flex-shrink:0}
+.gateway-info-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.gateway-info-val{font-size:14px;font-weight:600;color:var(--text)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.5 3.5 10.7 8 12 4.5-1.3 8-6.5 8-12V6L12 2z"/></svg>
+    </div>
+    <div>
+      <div class="logo-name">FRAUD-X</div>
+      <div class="logo-tag">FRAUD-X · Fraud Detection System</div>
+    </div>
+  </div>
+
+  <nav>
+    <div class="nav-group">
+      <div class="nav-label">Overview</div>
+      <button class="nav-btn active" data-pane="dashboard" onclick="showPane('dashboard')">
+        <span class="nav-icon">🏠</span> Dashboard
+      </button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Scan</div>
+      <button class="nav-btn" data-pane="url" onclick="showPane('url')">
+        <span class="nav-icon">🔗</span> URL / Link
+      </button>
+      <button class="nav-btn" data-pane="email" onclick="showPane('email')">
+        <span class="nav-icon">📧</span> Email
+      </button>
+      <button class="nav-btn" data-pane="phone" onclick="showPane('phone')">
+        <span class="nav-icon">📞</span> Phone Number
+      </button>
+      <button class="nav-btn" data-pane="sms" onclick="showPane('sms')">
+        <span class="nav-icon">💬</span> SMS Message
+      </button>
+      <button class="nav-btn" data-pane="file" onclick="showPane('file')">
+        <span class="nav-icon">📁</span> File / Malware
+      </button>
+      <button class="nav-btn" data-pane="merchant" onclick="showPane('merchant')">
+        <span class="nav-icon">🏪</span> Merchant
+      </button>
+      <button class="nav-btn" data-pane="social" onclick="showPane('social')">
+        <span class="nav-icon">👤</span> Social Profile
+      </button>
+      <button class="nav-btn" data-pane="qr" onclick="showPane('qr')">
+        <span class="nav-icon">📷</span> QR Code
+      </button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Network</div>
+      <button class="nav-btn" data-pane="ip" onclick="showPane('ip')">
+        <span class="nav-icon">🌐</span> IP Address
+      </button>
+      <button class="nav-btn" data-pane="crypto" onclick="showPane('crypto')">
+        <span class="nav-icon">₿</span> Crypto Address
+      </button>
+      <button class="nav-btn" data-pane="bulk" onclick="showPane('bulk')">
+        <span class="nav-icon">📋</span> Bulk URL Scan
+      </button>
+      <button class="nav-btn" data-pane="payment" onclick="showPane('payment')">
+        <span class="nav-icon">💳</span> Payment Gateway
+      </button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Monitor</div>
+      <button class="nav-btn" data-pane="alerts" onclick="showPane('alerts')">
+        <span class="nav-icon">🚨</span> Alert Log
+        <span class="nav-badge" id="alertBadge">0</span>
+      </button>
+      <button class="nav-btn" data-pane="analytics" onclick="showPane('analytics')">
+        <span class="nav-icon">📊</span> Analytics
+      </button>
+      <button class="nav-btn" data-pane="ledger" onclick="showPane('ledger')">
+        <span class="nav-icon">⛓</span> Ledger
+      </button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Tools</div>
+      <button class="nav-btn" data-pane="livetxn" onclick="showPane('livetxn')">
+        <span class="nav-icon">📡</span> Live Transactions
+        <span class="nav-badge show" id="livetxnBadge" style="background:var(--safe)">●</span>
+      </button>
+      <button class="nav-btn" data-pane="simulation" onclick="showPane('simulation')">
+        <span class="nav-icon">🧪</span> Simulation Lab
+      </button>
+    </div>
+  </nav>
+
+  <div class="sidebar-foot">
+    <div class="status-row">
+      <span class="dot pulse" id="sDot"></span>
+      <span id="sStatus" style="font-size:12px;color:var(--muted)">Connecting…</span>
+    </div>
+    <div style="font-size:11px;color:var(--muted2);margin-top:4px">FRAUD-X v2.0 · Real-time</div>
+  </div>
+</aside>
+
+<div class="right-panel">
+
+<!-- LIVE TICKER -->
+<div id="liveTicker" class="hidden">
+  <span class="ticker-live-badge">LIVE</span>
+  <div class="ticker-track">
+    <div class="ticker-inner" id="tickerInner">
+      <span class="ticker-item" style="color:rgba(255,255,255,.4)">Monitoring for threats…</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <div class="topbar-left">
+    <span id="topTitle">🏠 Dashboard</span>
+  </div>
+  <div class="topbar-right">
+    <div class="chip-stat"><span class="dot pulse" id="hDot" style="background:var(--muted2)"></span>&nbsp;<span id="hText" style="font-size:12px">…</span></div>
+    <div class="chip-stat">Scans: <strong id="totalScans">0</strong></div>
+    <div class="chip-stat" id="dangerChip" style="display:none">🔴 <strong id="dangerCount" style="color:var(--danger)">0</strong> threats</div>
+    <!-- User menu -->
+    <div class="user-menu" id="userMenuWrap" style="display:none">
+      <div class="user-avatar" id="userAvatarBtn" onclick="toggleUserMenu()">
+        <span id="userInitial">U</span>
+      </div>
+      <div class="user-dropdown" id="userDropdown">
+        <div class="user-dd-name">
+          <div id="ddName">User</div>
+          <div class="user-dd-email" id="ddEmail"></div>
+        </div>
+        <button class="user-dd-item" onclick="window.location.href='/login'">⚙️ Account</button>
+        <button class="user-dd-item danger" onclick="doLogout()">🚪 Sign Out</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- Stats -->
+<div class="stats-grid">
+  <div class="stat-box">
+    <div class="stat-box-label">Total Scans</div>
+    <div class="stat-box-val" id="st-total">0</div>
+  </div>
+  <div class="stat-box s-safe">
+    <div class="stat-box-label">Safe</div>
+    <div class="stat-box-val" id="st-safe">0</div>
+  </div>
+  <div class="stat-box s-caution">
+    <div class="stat-box-label">Caution</div>
+    <div class="stat-box-val" id="st-caution">0</div>
+  </div>
+  <div class="stat-box s-danger">
+    <div class="stat-box-label">Threats</div>
+    <div class="stat-box-val" id="st-danger">0</div>
+  </div>
+  <div class="stat-box s-accent">
+    <div class="stat-box-label">Ledger Blocks</div>
+    <div class="stat-box-val" id="st-blocks">0</div>
+  </div>
+</div>
+
+<!-- ═══ PANE: Dashboard ═══ -->
+<section class="pane active" id="pane-dashboard">
+  <div class="pane-title">FRAUD-X · Real-Time Fraud Detection System</div>
+  <div class="pane-sub">Live scan statistics, real-time threat feed, and 24-hour activity.</div>
+
+  <div class="stats-grid" style="margin-bottom:16px">
+    <div class="stat-box"><div class="stat-box-label">Total Scans</div><div class="stat-box-val" id="db-total">—</div></div>
+    <div class="stat-box s-safe"><div class="stat-box-label">Safe</div><div class="stat-box-val" id="db-safe">—</div></div>
+    <div class="stat-box s-caution"><div class="stat-box-label">Caution</div><div class="stat-box-val" id="db-caution">—</div></div>
+    <div class="stat-box s-danger"><div class="stat-box-label">Threats</div><div class="stat-box-val" id="db-danger">—</div></div>
+    <div class="stat-box s-accent"><div class="stat-box-label">Ledger Blocks</div><div class="stat-box-val" id="db-blocks">—</div></div>
+  </div>
+
+  <div class="dash-row">
+    <div class="card" style="margin-bottom:0">
+      <div class="flex" style="margin-bottom:12px">
+        <div class="card-title">Live Threat Feed</div>
+        <div class="spacer"></div>
+        <span style="font-size:11px;color:var(--muted)" id="db-feed-ts"></span>
+      </div>
+      <div id="db-feed"><div class="empty" style="padding:20px 0"><span class="empty-ico">📡</span><p>Loading…</p></div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title" style="margin-bottom:14px">Risk Score Distribution</div>
+      <div id="db-dist-bars"><div style="color:var(--muted);font-size:12px">Loading…</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="flex" style="margin-bottom:12px">
+      <div class="card-title">24-Hour Activity Timeline</div>
+      <div class="spacer"></div>
+      <span style="font-size:11px;color:var(--muted)">hourly buckets · auto-refreshes</span>
+    </div>
+    <canvas id="dashTimelineChart" style="max-height:190px"></canvas>
+  </div>
+
+  <!-- ── Live Transaction Stream ─────────────────────────── -->
+  <div class="card" style="margin-top:16px">
+    <div class="flex" style="margin-bottom:12px">
+      <div class="card-title">Live Transaction Stream</div>
+      <div class="spacer"></div>
+      <span class="dot pulse" id="txnDot" style="background:var(--muted2)"></span>
+      <span style="font-size:11px;color:var(--muted);margin-left:6px" id="txnCountLabel">waiting…</span>
+      <span id="txnBlockedBadge" style="display:none;margin-left:10px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)">0 BLOCKED</span>
+    </div>
+    <div class="tbl-wrap" style="max-height:240px;overflow-y:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Txn ID</th><th>Merchant</th><th>Amount</th><th>Country</th><th>Status</th><th>Risk Score</th>
+          </tr>
+        </thead>
+        <tbody id="txnTbody">
+          <tr id="txnPlaceholder"><td colspan="6" style="text-align:center;padding:22px;color:var(--muted2)">📡 Connecting to transaction stream…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── System Health + Alert Controls ─────────────────── -->
+  <div class="dash-row" style="margin-top:16px">
+
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title" style="margin-bottom:14px">System Health</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>CPU</span><span id="sysCpuVal">—</span></div>
+          <div class="meter"><div class="meter-fill safe" id="sysCpuBar" style="width:0%;transition:width .8s ease"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Memory</span><span id="sysMemVal">—</span></div>
+          <div class="meter"><div class="meter-fill safe" id="sysMemBar" style="width:0%;transition:width .8s ease"></div></div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px"><span>Disk</span><span id="sysDiskVal">—</span></div>
+          <div class="meter"><div class="meter-fill safe" id="sysDiskBar" style="width:0%;transition:width .8s ease"></div></div>
+        </div>
+        <div style="padding-top:6px;border-top:1px solid var(--border);font-size:11.5px;color:var(--muted)" id="sysClientsRow" style="display:none">
+          <span id="sysClientsText"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title" style="margin-bottom:14px">Alert Settings</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:13px;color:var(--text2)">🔔 Sound Alerts</span>
+          <button id="soundToggleBtn" onclick="rtToggleSound()" class="btn btn-ghost btn-sm">ON</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:13px;color:var(--text2)">🔔 Desktop Notifications</span>
+          <button id="notifToggleBtn" onclick="rtToggleNotif()" class="btn btn-ghost btn-sm">OFF</button>
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px">
+          <div>Blocked: <strong id="rtBlockedCnt" style="color:var(--danger)">0</strong></div>
+          <div>High-risk: <strong id="rtDangerCnt" style="color:var(--caution)">0</strong></div>
+          <div>Processed: <strong id="rtTxnCnt" style="color:var(--accent)">0</strong></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══ PANE: URL ═══ -->
+<section class="pane" id="pane-url">
+  <div class="pane-title">URL / Link Scanner</div>
+  <div class="pane-sub">Detect phishing, typosquatting, homograph attacks, and malicious redirects.</div>
+
+  <div class="card">
+    <div class="card-title">Quick Examples</div>
+    <div class="card-sub">Click any to instantly scan.</div>
+    <div class="chip-row">
+      <button class="echip bad" data-ex="http://paypa1.com/login/verify-account.php">🚨 paypa1.com typo</button>
+      <button class="echip bad" data-ex="http://192.168.1.4/banking/confirm.php">🚨 IP-based login</button>
+      <button class="echip bad" data-ex="https://google.com.security-update.xyz/signin">🚨 Brand in subdomain</button>
+      <button class="echip bad" data-ex="http://secure-paypal-support.tk/login">🚨 Suspicious TLD</button>
+      <button class="echip bad" data-ex="https://bit.ly/3xAbc123">⚠ URL shortener</button>
+      <button class="echip ok" data-ex="https://google.com">✓ Google</button>
+      <button class="echip ok" data-ex="https://paypal.com/us/signin">✓ PayPal</button>
+      <button class="echip ok" data-ex="https://github.com/openai/gpt-3">✓ GitHub</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Analyze URL</div>
+    <div class="field" style="margin-bottom:10px">
+      <label>URL</label>
+      <input class="inp" id="urlInp" type="text" placeholder="https://example.com/login" autocomplete="off"/>
+    </div>
+    <div class="flex" style="margin-bottom:0">
+      <button class="btn btn-primary" id="urlBtn">Scan URL</button>
+      <span class="text-sm">AI + 50+ heuristic signals</span>
+    </div>
+
+    <div class="pipeline" id="url-pipe" style="margin-top:16px">
+      <div class="pl" id="up0"><span class="pl-ico">🤖</span><div class="pl-name">Heuristics</div></div>
+      <div class="pl" id="up1"><span class="pl-ico">🔎</span><div class="pl-name">Brand Check</div></div>
+      <div class="pl" id="up2"><span class="pl-ico">🛡️</span><div class="pl-name">IDS</div></div>
+      <div class="pl" id="up3"><span class="pl-ico">✨</span><div class="pl-name">AI Analysis</div></div>
+      <div class="pl" id="up4"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="url-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Email ═══ -->
+<section class="pane" id="pane-email">
+  <div class="pane-title">Email Scanner</div>
+  <div class="pane-sub">Detect phishing emails, spoofing, credential harvesting, and social engineering.</div>
+
+  <div class="card">
+    <div class="card-title">Quick Presets</div>
+    <div class="chip-row">
+      <button class="echip bad" onclick="fillEmail('URGENT: Your account is suspended','noreply@paypa1-support.tk','verify@paypa1.cf','Your PayPal account has been suspended. Click here immediately to verify your identity and restore access. Failure to act within 24 hours will result in permanent suspension.','1','5')">🚨 PayPal phish</button>
+      <button class="echip bad" onclick="fillEmail('IRS Notice: Tax Refund Pending','noreply@irs-taxrefund.click','','You have a pending tax refund of $4,892. To claim your refund urgently provide your Social Security number and bank account details by clicking the link below. Act now before it expires.','0','2')">🚨 IRS scam</button>
+      <button class="echip bad" onclick="fillEmail('You won a prize!','winner@lucky-claim.xyz','','Congratulations! You have been selected to receive a $1000 Amazon gift card. Wire transfer $50 processing fee via Bitcoin to claim your prize immediately. Limited time offer.','0','1')">🚨 Prize scam</button>
+      <button class="echip ok" onclick="fillEmail('Your order has shipped','orders@amazon.com','','Your Amazon order #112-3456789 has shipped and is expected to arrive by Friday. Track your package using the link in your account.','0','1')">✓ Legit Amazon</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Email Details</div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field">
+        <label>Subject</label>
+        <input class="inp" id="eSubject" placeholder="Urgent: Account verification required"/>
+      </div>
+      <div class="field">
+        <label>Sender Address</label>
+        <input class="inp" id="eSender" placeholder="noreply@example.com"/>
+      </div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field">
+        <label>Sender Domain (for analysis)</label>
+        <input class="inp" id="eSenderDomain" placeholder="example.com"/>
+      </div>
+      <div class="field">
+        <label>Reply-To Address</label>
+        <input class="inp" id="eReplyTo" placeholder="reply@different-domain.com"/>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Email Body</label>
+      <textarea class="inp" id="eBody" placeholder="Paste the email body here…"></textarea>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field">
+        <label>Has Attachments?</label>
+        <select class="inp" id="eAttach">
+          <option value="">Unknown</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Number of Links</label>
+        <input class="inp" type="number" id="eLinks" placeholder="3" min="0"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="emailBtn">Analyze Email</button>
+    <div class="pipeline">
+      <div class="pl" id="ep0"><span class="pl-ico">📝</span><div class="pl-name">Content</div></div>
+      <div class="pl" id="ep1"><span class="pl-ico">🔎</span><div class="pl-name">Sender</div></div>
+      <div class="pl" id="ep2"><span class="pl-ico">🛡️</span><div class="pl-name">Patterns</div></div>
+      <div class="pl" id="ep3"><span class="pl-ico">✨</span><div class="pl-name">AI Analysis</div></div>
+      <div class="pl" id="ep4"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="email-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Phone ═══ -->
+<section class="pane" id="pane-phone">
+  <div class="pane-title">Phone Number Fraud Check</div>
+  <div class="pane-sub">Identify scam calls, robocalls, government impersonation, and wangiri attacks.</div>
+
+  <div class="card">
+    <div class="card-title">Quick Presets</div>
+    <div class="chip-row">
+      <button class="echip bad" onclick="fillPhone('+1-800-555-0199','US','received_call','IRS Tax Authority')">🚨 IRS scam call</button>
+      <button class="echip bad" onclick="fillPhone('+44-800-098-8765','GB','received_call','HMRC Tax')">🚨 HMRC scam</button>
+      <button class="echip bad" onclick="fillPhone('+234-803-000-0000','NG','payment_request','')">🚨 Nigeria payment</button>
+      <button class="echip bad" onclick="fillPhone('+1-555-111-1111','US','payment_request','Apple Support')">🚨 Tech support scam</button>
+      <button class="echip ok" onclick="fillPhone('+1-800-275-8777','US','received_call','USPS')">✓ USPS delivery</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Phone Details</div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field">
+        <label>Phone Number *</label>
+        <input class="inp" id="phNum" placeholder="+1-800-555-0199"/>
+      </div>
+      <div class="field">
+        <label>Country Code (ISO)</label>
+        <input class="inp" id="phCC" placeholder="US" maxlength="3"/>
+      </div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field">
+        <label>Context</label>
+        <select class="inp" id="phCtx">
+          <option value="">Unknown</option>
+          <option value="received_call">Received Call</option>
+          <option value="sms_received">Received SMS</option>
+          <option value="payment_request">Payment Requested</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Claimed Organization</label>
+        <input class="inp" id="phOrg" placeholder="IRS, Apple, Your Bank…"/>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="phoneBtn">Check Number</button>
+    <div class="pipeline">
+      <div class="pl" id="pp0"><span class="pl-ico">🔢</span><div class="pl-name">Format</div></div>
+      <div class="pl" id="pp1"><span class="pl-ico">🌍</span><div class="pl-name">Origin</div></div>
+      <div class="pl" id="pp2"><span class="pl-ico">🏷️</span><div class="pl-name">Org Check</div></div>
+      <div class="pl" id="pp3"><span class="pl-ico">✨</span><div class="pl-name">AI Analysis</div></div>
+      <div class="pl" id="pp4"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="phone-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: SMS ═══ -->
+<section class="pane" id="pane-sms">
+  <div class="pane-title">SMS Scam Detector</div>
+  <div class="pane-sub">Detect smishing attacks, fake delivery notifications, prize scams, and OTP theft.</div>
+
+  <div class="card">
+    <div class="card-title">Quick Presets</div>
+    <div class="chip-row">
+      <button class="echip bad" onclick="fillSMS('USPS: Your parcel is held. Click to reschedule delivery: http://usps-redeliver.tk/track','USPS','true','http://usps-redeliver.tk/track')">🚨 Fake USPS</button>
+      <button class="echip bad" onclick="fillSMS('[BANK] Unusual activity detected on your account. Verify now: http://secure-bank.xyz/verify','12345','true','http://secure-bank.xyz/verify')">🚨 Bank phish</button>
+      <button class="echip bad" onclick="fillSMS('Congratulations! You won a FREE iPhone 15. Claim your prize now: bit.ly/win123','PRIZE','true','')">🚨 Prize SMS</button>
+      <button class="echip ok" onclick="fillSMS('Your Amazon verification code is 847291. Do not share this code with anyone.','Amazon','false','')">✓ Legit OTP</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">SMS Details</div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Message Text *</label>
+      <textarea class="inp" id="smsMsg" placeholder="Paste the SMS text here…" style="min-height:80px"></textarea>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field">
+        <label>Sender ID / Number</label>
+        <input class="inp" id="smsSender" placeholder="12345 or +1-800-555-0199"/>
+      </div>
+      <div class="field">
+        <label>Contains Link?</label>
+        <select class="inp" id="smsLink">
+          <option value="">Unknown</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Link URL (if any)</label>
+      <input class="inp" id="smsUrl" placeholder="https://suspicious-link.xyz"/>
+    </div>
+    <button class="btn btn-primary" id="smsBtn">Analyze SMS</button>
+    <div class="pipeline">
+      <div class="pl" id="sp0"><span class="pl-ico">💬</span><div class="pl-name">Content</div></div>
+      <div class="pl" id="sp1"><span class="pl-ico">🔗</span><div class="pl-name">Link Check</div></div>
+      <div class="pl" id="sp2"><span class="pl-ico">🛡️</span><div class="pl-name">Patterns</div></div>
+      <div class="pl" id="sp3"><span class="pl-ico">✨</span><div class="pl-name">AI Analysis</div></div>
+      <div class="pl" id="sp4"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="sms-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: File ═══ -->
+<section class="pane" id="pane-file">
+  <div class="pane-title">File / Malware Scanner</div>
+  <div class="pane-sub">Detect malware, macro-enabled documents, PE executables, and disguised file types.</div>
+
+  <div class="card">
+    <div class="card-title">Upload File</div>
+    <div class="card-sub">Max 25 MB. Checks: hash, magic bytes, extension, macros, PE header.</div>
+    <div class="dropzone" id="drop">
+      <span class="dz-ico">📂</span>
+      <strong>Drop a file here or click to browse</strong>
+      <small>Checks extension, SHA-256 hash, magic bytes, VBA macros, script indicators</small>
+      <input type="file" id="fileInp" hidden/>
+    </div>
+    <div class="flex" style="margin-top:10px;gap:8px">
+      <button class="btn btn-primary" id="fileBtn">Scan File</button>
+      <button class="btn btn-ghost btn-sm" id="fileClear">Clear</button>
+    </div>
+    <div class="pipeline">
+      <div class="pl" id="fp0"><span class="pl-ico">🔢</span><div class="pl-name">Magic Bytes</div></div>
+      <div class="pl" id="fp1"><span class="pl-ico">🔑</span><div class="pl-name">Hash Check</div></div>
+      <div class="pl" id="fp2"><span class="pl-ico">🛡️</span><div class="pl-name">IDS Rules</div></div>
+      <div class="pl" id="fp3"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="file-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Merchant ═══ -->
+<section class="pane" id="pane-merchant">
+  <div class="pane-title">Merchant Risk Analyzer</div>
+  <div class="pane-sub">Score a payment receiver before sending money. Detects impersonation, new accounts, and fraud patterns.</div>
+
+  <div class="card">
+    <div class="card-title">Quick Presets</div>
+    <div class="chip-row">
+      <button class="echip bad" onclick="fillMerchant('PayPaI Support','3','false','NG','2','')">🚨 Fake PayPal</button>
+      <button class="echip bad" onclick="fillMerchant('Micros0ft Payments','8','false','RU','0','')">🚨 Leet spoof</button>
+      <button class="echip bad" onclick="fillMerchant('Coinbase Refunds','5','false','','1','')">🚨 Crypto scam</button>
+      <button class="echip ok" onclick="fillMerchant('Starbucks','1800','true','US','0','https://starbucks.com')">✓ Starbucks</button>
+      <button class="echip ok" onclick="fillMerchant('Netflix, Inc.','5000','true','US','0','https://netflix.com')">✓ Netflix</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Merchant Details</div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field"><label>Merchant Name *</label><input class="inp" id="mName" placeholder="Acme Payments"/></div>
+      <div class="field"><label>Account ID</label><input class="inp" id="mId" placeholder="M-48291"/></div>
+    </div>
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="field"><label>Country (ISO)</label><input class="inp" id="mCountry" placeholder="US" maxlength="3"/></div>
+      <div class="field"><label>Account Age (days)</label><input class="inp" type="number" id="mAge" placeholder="120" min="0"/></div>
+      <div class="field"><label>Verified?</label>
+        <select class="inp" id="mVerified">
+          <option value="">Unknown</option>
+          <option value="true">✓ Yes</option>
+          <option value="false">✗ No</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field"><label>Prior Complaints</label><input class="inp" type="number" id="mComplaints" placeholder="0" min="0"/></div>
+      <div class="field"><label>Avg Transaction (USD)</label><input class="inp" type="number" id="mAvg" placeholder="250" min="0"/></div>
+    </div>
+    <div class="field" style="margin-bottom:12px"><label>Website</label><input class="inp" id="mWeb" placeholder="https://acme.com"/></div>
+    <button class="btn btn-primary" id="mBtn">Analyze Merchant</button>
+    <div class="pipeline">
+      <div class="pl" id="mp0"><span class="pl-ico">🤖</span><div class="pl-name">AI Score</div></div>
+      <div class="pl" id="mp1"><span class="pl-ico">🏷️</span><div class="pl-name">Brand</div></div>
+      <div class="pl" id="mp2"><span class="pl-ico">🌍</span><div class="pl-name">Geo Risk</div></div>
+      <div class="pl" id="mp3"><span class="pl-ico">✨</span><div class="pl-name">AI Analysis</div></div>
+      <div class="pl" id="mp4"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="merchant-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Social ═══ -->
+<section class="pane" id="pane-social">
+  <div class="pane-title">Social Media Profile Analyzer</div>
+  <div class="pane-sub">Detect fake accounts, impersonators, investment scammers, and romance fraud profiles.</div>
+
+  <div class="card">
+    <div class="card-title">Quick Presets</div>
+    <div class="chip-row">
+      <button class="echip bad" onclick="fillSocial('instagram','paypa1_official','PayPal Official','Send us a DM to claim your refund. Crypto investment guaranteed returns 200%!','120','5000','false','5','true','true')">🚨 Fake PayPal IG</button>
+      <button class="echip bad" onclick="fillSocial('twitter','elonmusk_crypto','Elon Musk','Send BTC to double your money! Crypto giveaway - dm me for investment tips','500','0','false','10','true','true')">🚨 Impersonator</button>
+      <button class="echip ok" onclick="fillSocial('instagram','starbucks','Starbucks','The world is a better place when people take breaks. #Starbucks','5000000','200','true','3000','false','false')">✓ Starbucks official</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Profile Details</div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field"><label>Platform *</label>
+        <select class="inp" id="socPlat">
+          <option value="instagram">Instagram</option>
+          <option value="twitter">Twitter / X</option>
+          <option value="facebook">Facebook</option>
+          <option value="linkedin">LinkedIn</option>
+          <option value="tiktok">TikTok</option>
+        </select>
+      </div>
+      <div class="field"><label>Username *</label><input class="inp" id="socUser" placeholder="username"/></div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field"><label>Display Name</label><input class="inp" id="socDisplay" placeholder="Display Name"/></div>
+      <div class="field"><label>Account Age (days)</label><input class="inp" type="number" id="socAge" placeholder="90" min="0"/></div>
+    </div>
+    <div class="field" style="margin-bottom:12px"><label>Bio Text</label><textarea class="inp" id="socBio" placeholder="Account bio…" style="min-height:70px"></textarea></div>
+    <div class="grid3" style="margin-bottom:12px">
+      <div class="field"><label>Followers</label><input class="inp" type="number" id="socFollowers" placeholder="1000" min="0"/></div>
+      <div class="field"><label>Following</label><input class="inp" type="number" id="socFollowing" placeholder="500" min="0"/></div>
+      <div class="field"><label>Verified?</label>
+        <select class="inp" id="socVerified">
+          <option value="">Unknown</option>
+          <option value="true">✓ Yes</option>
+          <option value="false">✗ No</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field"><label>Post / Tweet Count</label><input class="inp" type="number" id="socPosts" placeholder="150" min="0"/></div>
+      <div class="field"><label>Profile URL (optional)</label><input class="inp" id="socProfileUrl" placeholder="https://instagram.com/username"/></div>
+    </div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field"><label>Selling via profile?</label>
+        <select class="inp" id="socSelling">
+          <option value="">Unknown</option>
+          <option value="true">Yes</option>
+          <option value="false">No</option>
+        </select>
+      </div>
+      <div class="field"><label>DM requesting payment?</label>
+        <select class="inp" id="socDM">
+          <option value="">No / Unknown</option>
+          <option value="true">Yes</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="socialBtn">Analyze Profile</button>
+    <div class="pipeline">
+      <div class="pl" id="sop0"><span class="pl-ico">👤</span><div class="pl-name">Profile</div></div>
+      <div class="pl" id="sop1"><span class="pl-ico">🔎</span><div class="pl-name">Brand Check</div></div>
+      <div class="pl" id="sop2"><span class="pl-ico">📊</span><div class="pl-name">Signals</div></div>
+      <div class="pl" id="sop3"><span class="pl-ico">✨</span><div class="pl-name">AI Analysis</div></div>
+      <div class="pl" id="sop4"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="social-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: QR ═══ -->
+<section class="pane" id="pane-qr">
+  <div class="pane-title">QR Code URL Analyzer</div>
+  <div class="pane-sub">Scan QR code destinations before visiting. Detects quishing (QR phishing) attacks.</div>
+
+  <div class="card">
+    <div class="card-title">Quick Presets</div>
+    <div class="chip-row">
+      <button class="echip bad" onclick="fillQR('http://paypal-payment.tk/pay','payment')">🚨 Fake payment QR</button>
+      <button class="echip bad" onclick="fillQR('https://bit.ly/qr-restaurant-menu','unknown')">⚠ Shortener QR</button>
+      <button class="echip ok" onclick="fillQR('https://starbucks.com/menu','restaurant_menu')">✓ Legit menu QR</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">QR Code Details</div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Decoded URL *</label>
+      <input class="inp" id="qrUrl" placeholder="https://decoded-url-from-qr.com"/>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Context / Where did you find this QR?</label>
+      <select class="inp" id="qrCtx">
+        <option value="unknown">Unknown / Unsure</option>
+        <option value="restaurant_menu">Restaurant / Cafe menu</option>
+        <option value="payment">Payment / checkout</option>
+        <option value="event">Event / ticket</option>
+        <option value="advertisement">Advertisement</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="qrBtn">Analyze QR Code</button>
+    <div class="pipeline">
+      <div class="pl" id="qp0"><span class="pl-ico">📷</span><div class="pl-name">Decode</div></div>
+      <div class="pl" id="qp1"><span class="pl-ico">🔗</span><div class="pl-name">URL Check</div></div>
+      <div class="pl" id="qp2"><span class="pl-ico">🌍</span><div class="pl-name">Context</div></div>
+      <div class="pl" id="qp3"><span class="pl-ico">✨</span><div class="pl-name">AI Analysis</div></div>
+      <div class="pl" id="qp4"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="qr-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: IP ═══ -->
+<section class="pane" id="pane-ip">
+  <div class="pane-title">IP Address Scanner</div>
+  <div class="pane-sub">Check IP reputation, detect datacenter/proxy/VPN ranges, and flag risky ports.</div>
+  <div class="card">
+    <div class="card-title">Quick Presets</div>
+    <div class="chip-row">
+      <button class="echip bad" onclick="fillIP('192.168.1.1','login_attempt','')">🚨 Private IP in login</button>
+      <button class="echip bad" onclick="fillIP('45.33.32.156','transaction','3389')">🚨 Datacenter + RDP</button>
+      <button class="echip bad" onclick="fillIP('127.0.0.1','email_sender','')">🚨 Loopback as sender</button>
+      <button class="echip ok" onclick="fillIP('8.8.8.8','api_call','443')">✓ Google DNS</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">IP Details</div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field"><label>IP Address *</label><input class="inp" id="ipAddr" placeholder="192.168.1.1 or 2001:db8::1"/></div>
+      <div class="field"><label>Port (optional)</label><input class="inp" type="number" id="ipPort" placeholder="443" min="1" max="65535"/></div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Context</label>
+      <select class="inp" id="ipCtx">
+        <option value="">Unknown</option>
+        <option value="login_attempt">Login Attempt</option>
+        <option value="transaction">Financial Transaction</option>
+        <option value="api_call">API Call</option>
+        <option value="email_sender">Email Sender</option>
+      </select>
+    </div>
+    <button class="btn btn-primary" id="ipBtn">Scan IP</button>
+    <div class="pipeline">
+      <div class="pl" id="ipp0"><span class="pl-ico">🔢</span><div class="pl-name">Format</div></div>
+      <div class="pl" id="ipp1"><span class="pl-ico">🌍</span><div class="pl-name">Range</div></div>
+      <div class="pl" id="ipp2"><span class="pl-ico">🔌</span><div class="pl-name">Port Risk</div></div>
+      <div class="pl" id="ipp3"><span class="pl-ico">🕸</span><div class="pl-name">Graph</div></div>
+      <div class="pl" id="ipp4"><span class="pl-ico">✨</span><div class="pl-name">AI Analysis</div></div>
+      <div class="pl" id="ipp5"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="ip-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Crypto ═══ -->
+<section class="pane" id="pane-crypto">
+  <div class="pane-title">Cryptocurrency Address Scanner</div>
+  <div class="pane-sub">Validate crypto addresses, detect mixer services, investment scams, and disposable wallets.</div>
+  <div class="card">
+    <div class="card-title">Quick Presets</div>
+    <div class="chip-row">
+      <button class="echip bad" onclick="fillCrypto('1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf Nd','BTC','investment','Send BTC to receive double back — elon giveaway! connect wallet approve contract')">🚨 BTC doubler scam</button>
+      <button class="echip bad" onclick="fillCrypto('0x742d35Cc6634C0532925a3b844Bc454e4438f44e','ETH','payment_request','Verify your metamask seed phrase approve transaction')">🚨 ETH phish</button>
+      <button class="echip ok" onclick="fillCrypto('bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq','BTC','donation','')">✓ BTC donation</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Crypto Details</div>
+    <div class="grid2" style="margin-bottom:12px">
+      <div class="field"><label>Wallet Address *</label><input class="inp" id="cAddr" placeholder="0x… or bc1… or T…"/></div>
+      <div class="field"><label>Coin</label>
+        <select class="inp" id="cCoin">
+          <option value="">Auto-detect</option>
+          <option value="BTC">Bitcoin (BTC)</option>
+          <option value="ETH">Ethereum (ETH)</option>
+          <option value="LTC">Litecoin (LTC)</option>
+          <option value="XMR">Monero (XMR)</option>
+          <option value="TRX">TRON (TRX)</option>
+          <option value="SOL">Solana (SOL)</option>
+          <option value="BNB">BNB</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Context</label>
+      <select class="inp" id="cCtx">
+        <option value="">Unknown</option>
+        <option value="payment_request">Payment Request</option>
+        <option value="investment">Investment Offer</option>
+        <option value="donation">Donation</option>
+      </select>
+    </div>
+    <div class="field" style="margin-bottom:12px">
+      <label>Message / Context Text</label>
+      <textarea class="inp" id="cMsg" placeholder="Paste the message that included this address…" style="min-height:70px"></textarea>
+    </div>
+    <button class="btn btn-primary" id="cryptoBtn">Scan Address</button>
+    <div class="pipeline">
+      <div class="pl" id="crp0"><span class="pl-ico">🔑</span><div class="pl-name">Format</div></div>
+      <div class="pl" id="crp1"><span class="pl-ico">🔍</span><div class="pl-name">Patterns</div></div>
+      <div class="pl" id="crp2"><span class="pl-ico">🕸</span><div class="pl-name">Graph</div></div>
+      <div class="pl" id="crp3"><span class="pl-ico">✨</span><div class="pl-name">AI Analysis</div></div>
+      <div class="pl" id="crp4"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="crypto-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Bulk Scan ═══ -->
+<section class="pane" id="pane-bulk">
+  <div class="pane-title">Bulk URL Scanner</div>
+  <div class="pane-sub">Scan up to 20 URLs at once. Paste one URL per line.</div>
+  <div class="scan-card">
+    <div class="form-group">
+      <label class="form-label">URLs (one per line, max 20)</label>
+      <textarea id="bulkUrls" class="form-input" rows="8" placeholder="https://example.com&#10;http://suspicious-site.tk/login&#10;https://github.com"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="runBulkScan()">Scan All</button>
+  </div>
+  <div id="bulk-result"></div>
+</section>
+
+<!-- ═══ PANE: Payment Gateway ═══ -->
+<section class="pane" id="pane-payment">
+  <div class="pane-title">Payment Gateway Analyzer</div>
+  <div class="pane-sub">Verify payment pages in real time. Detects fake gateways, typosquatting, cross-domain form injection, and spoofed brands.</div>
+
+  <div class="card">
+    <div class="card-title">Quick Examples</div>
+    <div class="chip-row">
+      <button class="echip bad" onclick="fillPayment('http://paypa1-secure.tk/checkout','paypa1-secure.tk','PayPal Payment','PayPaI',true,'http://steal-data.xyz/collect')">🚨 Fake PayPal</button>
+      <button class="echip bad" onclick="fillPayment('http://192.168.10.5/payment','192.168.10.5','Pay Now','Unknown Merchant',true,'')">🚨 IP-based checkout</button>
+      <button class="echip bad" onclick="fillPayment('https://stripe.com.payments-verify.tk/pay','stripe.com.payments-verify.tk','Stripe Checkout','Stripe',true,'')">🚨 Brand subdomain spoof</button>
+      <button class="echip ok" onclick="fillPayment('https://checkout.stripe.com/pay/cs_test_abc','checkout.stripe.com','Stripe Checkout','',true,'https://checkout.stripe.com/pay')">✓ Real Stripe</button>
+      <button class="echip ok" onclick="fillPayment('https://www.paypal.com/checkoutnow','www.paypal.com','PayPal Checkout','',true,'https://www.paypal.com/checkoutnow')">✓ Real PayPal</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Payment Page Details</div>
+    <div class="card-sub">Provide as much context as the browser extension would detect.</div>
+
+    <div class="field">
+      <label>Page URL *</label>
+      <input class="inp" id="pmtUrl" type="text" placeholder="https://checkout.example.com/pay" autocomplete="off"/>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Detected Domain</label>
+        <input class="inp" id="pmtDomain" placeholder="checkout.example.com"/>
+      </div>
+      <div class="field">
+        <label>Page Title</label>
+        <input class="inp" id="pmtTitle" placeholder="Secure Checkout · ACME"/>
+      </div>
+    </div>
+    <div class="grid2">
+      <div class="field">
+        <label>Merchant Name (from DOM)</label>
+        <input class="inp" id="pmtMerchant" placeholder="ACME Store"/>
+      </div>
+      <div class="field">
+        <label>Form Action URL (if different)</label>
+        <input class="inp" id="pmtFormAction" placeholder="https://other-domain.com/submit"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>Has Payment Form?</label>
+      <select class="inp" id="pmtHasForm">
+        <option value="true">Yes — card / UPI / bank input fields detected</option>
+        <option value="false">No payment form detected</option>
+      </select>
+    </div>
+
+    <div class="flex" style="margin-bottom:0">
+      <button class="btn btn-primary" id="pmtBtn" onclick="doPaymentScan()">🛡 Verify Payment Gateway</button>
+      <span class="text-sm">Multi-signal gateway verification</span>
+    </div>
+
+    <div class="pipeline" style="margin-top:16px">
+      <div class="pl" id="pmt0"><span class="pl-ico">🔗</span><div class="pl-name">URL Check</div></div>
+      <div class="pl" id="pmt1"><span class="pl-ico">🛡️</span><div class="pl-name">Gateway DB</div></div>
+      <div class="pl" id="pmt2"><span class="pl-ico">🔤</span><div class="pl-name">Spoof Detect</div></div>
+      <div class="pl" id="pmt3"><span class="pl-ico">📝</span><div class="pl-name">Form Analysis</div></div>
+      <div class="pl" id="pmt4"><span class="pl-ico">✨</span><div class="pl-name">AI Verify</div></div>
+      <div class="pl" id="pmt5"><span class="pl-ico">⛓</span><div class="pl-name">Ledger</div></div>
+    </div>
+    <div class="result" id="pmt-result"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Analytics ═══ -->
+<section class="pane" id="pane-analytics">
+  <div class="pane-title">Analytics Dashboard</div>
+  <div class="pane-sub">Real-time scan trends, risk distribution, and behavioral intelligence.</div>
+
+  <div class="behavior-grid" id="behaviorCards">
+    <div class="beh-card"><div class="beh-card-label">Last Hour</div><div class="beh-card-val" id="beh-hr">—</div><div class="beh-card-sub">total scans</div></div>
+    <div class="beh-card"><div class="beh-card-label">Last 5 Min</div><div class="beh-card-val" id="beh-5m">—</div><div class="beh-card-sub">recent activity</div></div>
+    <div class="beh-card"><div class="beh-card-label">Threats (1h)</div><div class="beh-card-val" id="beh-danger" style="color:var(--danger)">—</div><div class="beh-card-sub">danger-level scans</div></div>
+    <div class="beh-card"><div class="beh-card-label">Avg Score (1h)</div><div class="beh-card-val" id="beh-avg">—</div><div class="beh-card-sub">risk score</div></div>
+    <div class="beh-card"><div class="beh-card-label">Graph Nodes</div><div class="beh-card-val" id="gph-nodes">—</div><div class="beh-card-sub">entity graph size</div></div>
+    <div class="beh-card"><div class="beh-card-label">Graph Edges</div><div class="beh-card-val" id="gph-edges">—</div><div class="beh-card-sub">linked relationships</div></div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-box">
+      <div class="chart-box-title">6-Hour Scan Trend</div>
+      <canvas id="trendChart" class="chart-canvas"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-box-title">Risk Level Distribution</div>
+      <canvas id="distChart" class="chart-canvas"></canvas>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-box">
+      <div class="chart-box-title">Scans by Type</div>
+      <canvas id="kindChart" class="chart-canvas"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-box-title">Risk Score Distribution</div>
+      <canvas id="scoreDistChart" class="chart-canvas"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex" style="margin-bottom:12px">
+      <div>
+        <div class="card-title">24-Hour Activity Timeline</div>
+        <div class="card-sub" style="margin-bottom:0">Scan volume per kind, hourly</div>
+      </div>
+    </div>
+    <canvas id="timelineChart" style="max-height:200px"></canvas>
+  </div>
+
+  <div class="card">
+    <div class="flex" style="margin-bottom:12px">
+      <div>
+        <div class="card-title">Top Flagged Targets (24h)</div>
+        <div class="card-sub" style="margin-bottom:0">Most-scanned targets ranked by scan count</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost btn-sm" onclick="refreshAnalytics()">↻ Refresh</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Target</th><th>Type</th><th>Scans</th><th>Avg Score</th><th>Max</th><th>Threats</th><th>Last Seen</th></tr></thead>
+        <tbody id="topTargetsTbody"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="margin-bottom:12px">Per-Type Risk Baselines (ML Engine)</div>
+    <div style="overflow-x:auto">
+      <table class="baseline-table" id="baselineTable">
+        <thead><tr><th>Type</th><th>Avg Score</th><th>Std Dev</th><th>High Risk %</th><th>Scans</th></tr></thead>
+        <tbody id="baselineTbody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Alerts ═══ -->
+<section class="pane" id="pane-alerts">
+  <div class="pane-title">Alert Log</div>
+  <div class="pane-sub">Every scan is recorded here in real time. All entries are linked to the immutable ledger.</div>
+
+  <div class="card">
+    <div class="flex" style="margin-bottom:12px">
+      <div>
+        <div class="card-title">Scan History</div>
+        <div class="text-sm" id="alertCountLine">Showing 0 alerts</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost btn-sm" id="refreshBtn">↻ Refresh</button>
+      <button class="btn btn-ghost btn-sm" id="exportBtn">⬇ Export CSV</button>
+      <button class="btn btn-danger btn-sm" id="clearBtn">🗑 Clear All</button>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <select class="inp filter-inp" id="filterKind">
+        <option value="">All Types</option>
+        <option>url</option><option>email</option><option>phone</option>
+        <option>sms</option><option>file</option><option>merchant</option>
+        <option>social</option><option>qr</option><option>ip</option><option>crypto</option>
+        <option>payment</option>
+      </select>
+      <select class="inp filter-inp" id="filterLevel">
+        <option value="">All Levels</option>
+        <option value="danger">Danger</option>
+        <option value="caution">Caution</option>
+        <option value="safe">Safe</option>
+      </select>
+      <input class="inp filter-inp" id="filterSearch" placeholder="Search target…" autocomplete="off"/>
+      <input class="inp filter-inp" id="filterMinScore" type="number" placeholder="Min score" min="0" max="100"/>
+      <input class="inp filter-inp" id="filterMaxScore" type="number" placeholder="Max score" min="0" max="100"/>
+      <button class="btn btn-primary btn-sm" id="filterApply">Filter</button>
+      <button class="btn btn-ghost btn-sm" id="filterReset">Reset</button>
+    </div>
+
+    <div class="tbl-wrap" style="max-height:480px;overflow-y:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th><th>Type</th><th>Target</th><th>Score</th><th>Level</th><th>Block</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="alertsBody">
+          <tr><td colspan="7"><div class="empty"><span class="empty-ico">📭</span><p>No scans yet.</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <button class="btn btn-ghost btn-sm" id="pgPrev">← Prev</button>
+      <span class="pg-info" id="pgInfo">Page 1 / 1</span>
+      <button class="btn btn-ghost btn-sm" id="pgNext">Next →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Ledger ═══ -->
+<section class="pane" id="pane-ledger">
+  <div class="pane-title">Blockchain-Style Audit Ledger</div>
+  <div class="pane-sub">Every scan produces a SHA-256 chained block. Tampering with any block invalidates all subsequent blocks.</div>
+
+  <div class="card">
+    <div class="flex" style="margin-bottom:16px">
+      <span class="integrity-badge ok" id="ledgerValidity">⛓ Integrity: Valid</span>
+      <div class="spacer"></div>
+      <span class="text-sm" id="ledgerLen">0 blocks</span>
+    </div>
+    <div id="ledgerBlocks">
+      <div class="empty"><span class="empty-ico">⛓</span><p>No blocks yet.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Live Transactions ═══ -->
+<section class="pane" id="pane-livetxn">
+  <div class="pane-title">Live Transaction Stream</div>
+  <div class="pane-sub">Real-time payment transactions scored by the fraud engine. Updates every 1–3 seconds via WebSocket.</div>
+
+  <!-- Filter + search bar -->
+  <div class="filter-bar">
+    <button class="btn btn-ghost btn-sm" id="ltxnFilterAll"    onclick="ltxnSetFilter('ALL')"     style="border-color:var(--accent);color:var(--accent)">All</button>
+    <button class="btn btn-ghost btn-sm" id="ltxnFilterSafe"   onclick="ltxnSetFilter('SAFE')">Safe</button>
+    <button class="btn btn-ghost btn-sm" id="ltxnFilterCaution" onclick="ltxnSetFilter('CAUTION')">Caution</button>
+    <button class="btn btn-ghost btn-sm" id="ltxnFilterDanger" onclick="ltxnSetFilter('DANGER')">Danger</button>
+    <button class="btn btn-ghost btn-sm" id="ltxnFilterBlocked" onclick="ltxnSetFilter('BLOCKED')">Blocked</button>
+    <input class="inp filter-inp wide" id="ltxnSearch" placeholder="Search merchant, txn ID, country…" oninput="ltxnRender()">
+    <div class="spacer"></div>
+    <button class="btn btn-ghost btn-sm" id="ltxnPauseBtn" onclick="ltxnTogglePause()">⏸ Pause</button>
+    <button class="btn btn-ghost btn-sm" onclick="ltxnClear()">🗑 Clear</button>
+  </div>
+
+  <!-- Stats strip -->
+  <div class="stats-grid" style="margin-bottom:14px">
+    <div class="stat-box"><div class="stat-box-label">Total</div><div class="stat-box-val" id="ltxnStatTotal">0</div></div>
+    <div class="stat-box s-safe"><div class="stat-box-label">Safe</div><div class="stat-box-val" id="ltxnStatSafe">0</div></div>
+    <div class="stat-box s-caution"><div class="stat-box-label">Caution</div><div class="stat-box-val" id="ltxnStatCaution">0</div></div>
+    <div class="stat-box s-danger"><div class="stat-box-label">Danger</div><div class="stat-box-val" id="ltxnStatDanger">0</div></div>
+    <div class="stat-box s-danger"><div class="stat-box-label">Blocked</div><div class="stat-box-val" id="ltxnStatBlocked">0</div></div>
+  </div>
+
+  <!-- Table -->
+  <div class="tbl-wrap" style="max-height:520px;overflow-y:auto" id="ltxnTableWrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Txn ID</th><th>Merchant</th><th>Amount</th><th>Country</th>
+          <th>Method</th><th>Status</th><th>Risk Score</th><th>Time</th>
+        </tr>
+      </thead>
+      <tbody id="ltxnTbody">
+        <tr><td colspan="8" style="text-align:center;padding:28px;color:var(--muted2)">📡 Waiting for transactions…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Detail panel (shown on row click) -->
+  <div class="card" id="ltxnDetail" style="display:none;margin-top:14px">
+    <div class="flex" style="margin-bottom:10px">
+      <div class="card-title">Transaction Detail</div>
+      <div class="spacer"></div>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ltxnDetail').style.display='none'">✕ Close</button>
+    </div>
+    <div id="ltxnDetailBody" style="font-size:13px;color:var(--text2);line-height:1.7"></div>
+  </div>
+</section>
+
+<!-- ═══ PANE: Simulation Lab ═══ -->
+<section class="pane" id="pane-simulation">
+  <div class="pane-title">Simulation Lab 🧪</div>
+  <div class="pane-sub">Trigger live fraud attack scenarios — events are broadcast to the WebSocket stream in real-time.</div>
+
+  <!-- Attack scenario buttons -->
+  <div class="card">
+    <div class="card-title" style="margin-bottom:4px">Attack Scenarios</div>
+    <div class="card-sub">Click any scenario to launch it. Events appear in the Live Feed and Live Transactions pane.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:4px">
+
+      <button class="btn btn-ghost" onclick="simRun('phishing_campaign')" id="simBtn-phishing_campaign" style="justify-content:flex-start;flex-direction:column;align-items:flex-start;padding:14px;height:auto;gap:4px">
+        <span style="font-size:18px">🎣</span>
+        <strong style="font-size:13px">Phishing Campaign</strong>
+        <span style="font-size:11px;color:var(--muted);font-weight:400">Coordinated phishing on multiple users</span>
+        <span style="font-size:10px;font-weight:700;color:var(--danger)">CRITICAL</span>
+      </button>
+
+      <button class="btn btn-ghost" onclick="simRun('bot_attack')" id="simBtn-bot_attack" style="justify-content:flex-start;flex-direction:column;align-items:flex-start;padding:14px;height:auto;gap:4px">
+        <span style="font-size:18px">🤖</span>
+        <strong style="font-size:13px">Bot Attack</strong>
+        <span style="font-size:11px;color:var(--muted);font-weight:400">Automated credential harvesting bots</span>
+        <span style="font-size:10px;font-weight:700;color:var(--danger)">HIGH</span>
+      </button>
+
+      <button class="btn btn-ghost" onclick="simRun('credential_stuffing')" id="simBtn-credential_stuffing" style="justify-content:flex-start;flex-direction:column;align-items:flex-start;padding:14px;height:auto;gap:4px">
+        <span style="font-size:18px">🔑</span>
+        <strong style="font-size:13px">Credential Stuffing</strong>
+        <span style="font-size:11px;color:var(--muted);font-weight:400">Bulk login attempts with stolen credentials</span>
+        <span style="font-size:10px;font-weight:700;color:var(--danger)">HIGH</span>
+      </button>
+
+      <button class="btn btn-ghost" onclick="simRun('transaction_burst')" id="simBtn-transaction_burst" style="justify-content:flex-start;flex-direction:column;align-items:flex-start;padding:14px;height:auto;gap:4px">
+        <span style="font-size:18px">💸</span>
+        <strong style="font-size:13px">Transaction Burst</strong>
+        <span style="font-size:11px;color:var(--muted);font-weight:400">Rapid-fire high-value transactions</span>
+        <span style="font-size:10px;font-weight:700;color:var(--caution)">MEDIUM</span>
+      </button>
+
+      <button class="btn btn-ghost" onclick="simRun('coordinated_campaign')" id="simBtn-coordinated_campaign" style="justify-content:flex-start;flex-direction:column;align-items:flex-start;padding:14px;height:auto;gap:4px">
+        <span style="font-size:18px">🕸</span>
+        <strong style="font-size:13px">Coordinated Campaign</strong>
+        <span style="font-size:11px;color:var(--muted);font-weight:400">Multi-vector organized fraud ring</span>
+        <span style="font-size:10px;font-weight:700;color:var(--danger)">CRITICAL</span>
+      </button>
+
+      <button class="btn btn-ghost" onclick="simRun('ato_attack')" id="simBtn-ato_attack" style="justify-content:flex-start;flex-direction:column;align-items:flex-start;padding:14px;height:auto;gap:4px">
+        <span style="font-size:18px">🔓</span>
+        <strong style="font-size:13px">Account Takeover</strong>
+        <span style="font-size:11px;color:var(--muted);font-weight:400">ATO via session hijacking & device swap</span>
+        <span style="font-size:10px;font-weight:700;color:var(--danger)">CRITICAL</span>
+      </button>
+
+      <button class="btn btn-ghost" onclick="simRun('carding_test')" id="simBtn-carding_test" style="justify-content:flex-start;flex-direction:column;align-items:flex-start;padding:14px;height:auto;gap:4px">
+        <span style="font-size:18px">💳</span>
+        <strong style="font-size:13px">Card Testing</strong>
+        <span style="font-size:11px;color:var(--muted);font-weight:400">Small test charges to validate stolen cards</span>
+        <span style="font-size:10px;font-weight:700;color:var(--caution)">MEDIUM</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- Status + event feed -->
+  <div class="dash-row">
+    <div class="card" style="margin-bottom:0">
+      <div class="flex" style="margin-bottom:12px">
+        <div class="card-title">Simulation Feed</div>
+        <div class="spacer"></div>
+        <span id="simStatus" style="font-size:12px;color:var(--muted)">Idle</span>
+      </div>
+      <div id="simFeed" style="max-height:320px;overflow-y:auto">
+        <div class="empty" style="padding:20px 0"><span class="empty-ico">🧪</span><p>Run a scenario to see live events</p></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title" style="margin-bottom:14px">Run Statistics</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="stat-box s-accent" style="padding:10px 14px">
+          <div class="stat-box-label">Scenarios Run</div>
+          <div class="stat-box-val" id="simStatRuns">0</div>
+        </div>
+        <div class="stat-box s-danger" style="padding:10px 14px">
+          <div class="stat-box-label">Events Broadcast</div>
+          <div class="stat-box-val" id="simStatEvents">0</div>
+        </div>
+        <div class="stat-box s-caution" style="padding:10px 14px">
+          <div class="stat-box-label">Last Scenario</div>
+          <div class="stat-box-val" id="simStatLast" style="font-size:13px;font-weight:600">—</div>
+        </div>
+        <div class="stat-box" style="padding:10px 14px">
+          <div class="stat-box-label">Last Run Result</div>
+          <div id="simStatSummary" style="font-size:12px;color:var(--muted);margin-top:4px">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div><!-- /right-panel -->
+</div><!-- /shell -->
+
+<div id="toast"></div>
+
+<!-- Notes modal -->
+<div class="modal-overlay" id="notesModal" style="display:none" onclick="if(event.target===this)closeNotes()">
+  <div class="modal-box">
+    <div class="modal-title">📝 Analyst Notes</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-family:'DM Mono',monospace" id="notesAlertId"></div>
+    <textarea class="inp" id="notesText" style="min-height:110px;margin-bottom:14px" placeholder="Add your analysis notes here…"></textarea>
+    <div class="flex" style="gap:8px">
+      <button class="btn btn-primary btn-sm" id="saveNotesBtn">Save Notes</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeNotes()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const API = "";
+
+// ─── Helpers ────────────────────────────────────────────
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function fmtTime(ts){return new Date(ts*1000).toLocaleTimeString()}
+function fmtDate(ts){return new Date(ts*1000).toLocaleString()}
+async function api(path,opts){
+  const r=await fetch(API+path,opts);
+  if(!r.ok){const t=await r.text();throw new Error(t||r.statusText)}
+  return r.json()
+}
+function toast(msg,type='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.borderLeftColor=type==='danger'?'var(--danger)':type==='safe'?'var(--safe)':'var(--accent)';
+  el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>el.classList.remove('show'),2800);
+}
+const PANE_TITLES={
+  dashboard:'🏠 Dashboard',
+  url:'🔗 URL Scanner',email:'📧 Email Scanner',phone:'📞 Phone Fraud Check',
+  sms:'💬 SMS Detector',file:'📁 File Scanner',merchant:'🏪 Merchant Analyzer',
+  social:'👤 Social Profile',qr:'📷 QR Code Analyzer',
+  ip:'🌐 IP Address Scanner',crypto:'₿ Crypto Address Scanner',
+  bulk:'📋 Bulk URL Scanner',payment:'💳 Payment Gateway Analyzer',
+  alerts:'🚨 Alert Log',analytics:'📊 Analytics',ledger:'⛓ Audit Ledger'
+};
+
+// ─── Navigation ─────────────────────────────────────────
+function showPane(name){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.pane===name));
+  document.getElementById('topTitle').textContent=PANE_TITLES[name]||'';
+  if(name==='dashboard')refreshDashboard();
+  if(name==='alerts')refreshAlerts();
+  if(name==='ledger')refreshLedger();
+  if(name==='analytics')refreshAnalytics();
+}
+
+// ─── Pipeline animation ──────────────────────────────────
+function animPipe(prefix,n,cb){
+  for(let i=0;i<n;i++){const e=document.getElementById(prefix+i);if(e)e.className='pl'}
+  let s=0;
+  function tick(){
+    if(s>0){const p=document.getElementById(prefix+(s-1));if(p)p.className='pl done'}
+    if(s<n){const c=document.getElementById(prefix+s);if(c)c.className='pl run';s++;setTimeout(tick,300)}
+    else{cb()}
+  }
+  tick()
+}
+
+// ─── XAI renderer ────────────────────────────────────────
+function renderXAI(xai){
+  if(!xai||!xai.categories)return'';
+  const order=['critical','high','medium','low','informational'];
+  let rows='';
+  for(const cat of order){
+    const sigs=xai.categories[cat];
+    if(!sigs||!sigs.length)continue;
+    rows+=`<div class="xai-category">
+      <div class="xai-cat-label ${cat}">${cat}</div>
+      ${sigs.map(s=>`<div class="xai-signal ${cat}">${esc(s)}</div>`).join('')}
+    </div>`;
+  }
+  if(!rows)return'';
+  const conf=xai.confidence||'low';
+  const prior=xai.fraud_type_prior!=null?`<span style="font-size:11px;color:var(--muted);margin-left:8px">Base fraud rate: ${xai.fraud_type_prior}%</span>`:'';
+  return`<div class="xai-section">
+    <div class="xai-header" onclick="this.nextElementSibling.classList.toggle('open')">
+      <span style="font-size:14px">🔬</span>
+      <span class="xai-header-title">Explainable AI &middot; ${xai.signal_count||0} signals</span>
+      <span class="spacer"></span>
+      <span class="confidence-pill ${conf}">${conf} confidence</span>${prior}
+    </div>
+    <div class="xai-body">${rows}</div>
+  </div>`;
+}
+
+// ─── Result renderer ────────────────────────────────────
+function renderResult(el,res){
+  const lv=res.risk_level||'safe',sc=res.risk_score||0;
+  const reasons=(res.reasons||[]).map(r=>{
+    const ok=r.startsWith('No ')||r.includes('whitelist');
+    const isBeh=r.startsWith('[Behavioral]');
+    const isGraph=r.startsWith('[Graph]');
+    const ico=ok?'✅':isBeh?'🧠':isGraph?'🕸':'⚑';
+    return`<div class="reason"><span class="reason-ic">${ico}</span><span>${esc(r)}</span></div>`
+  }).join('');
+  const ai=res.ai_analysis&&res.ai_analysis!=='AI analysis unavailable (offline mode)'&&res.ai_analysis!=='AI analysis unavailable'
+    ?`<div class="ai-box"><div class="ai-label">✨ AI Analysis</div><div class="ai-text">${esc(res.ai_analysis)}</div></div>`:'';
+  const recClass=lv==='danger'?'danger-rec':lv==='caution'?'caution-rec':'';
+  const hashHtml=res.ledger_hash
+    ?`<div class="hash-row">&#x26D3; Block: ${res.ledger_hash.slice(0,20)}&hellip;</div>`:'';
+  const xaiHtml=renderXAI(res.explanation);
+
+  el.innerHTML=`
+    <div class="result-top">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span class="score-big ${lv}">${sc}</span>
+          <div>
+            <div class="score-denom">/ 100</div>
+            <span class="badge ${lv}">${lv}</span>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(res.target||'')}</div>
+      </div>
+    </div>
+    <div class="result-body">
+      <div class="meter"><div class="meter-fill ${lv}" style="width:0%"></div></div>
+      ${ai}
+      <div class="reasons">${reasons}</div>
+      <div class="rec ${recClass}"><strong>Recommendation:</strong> ${esc(res.recommendation||'')}</div>
+      ${res.sha256?`<div class="hash-row" style="margin-top:6px">SHA-256: ${res.sha256.slice(0,20)}&hellip;</div>`:''}
+      ${hashHtml}
+      ${xaiHtml}
+    </div>`;
+  el.classList.add('show');
+  setTimeout(()=>{const f=el.querySelector('.meter-fill');if(f)f.style.width=sc+'%'},60);
+}
+
+function scanBtn(id){
+  const el=document.getElementById(id);
+  el.classList.remove('show');el.innerHTML='';
+  return el;
+}
+
+// ─── URL Scanner ─────────────────────────────────────────
+document.querySelectorAll('.echip[data-ex]').forEach(c=>{
+  c.addEventListener('click',()=>{
+    document.getElementById('urlInp').value=c.dataset.ex;
+    showPane('url');document.getElementById('urlBtn').click();
+  });
+});
+
+document.getElementById('urlBtn').addEventListener('click',async()=>{
+  const url=document.getElementById('urlInp').value.trim();
+  if(!url){toast('Enter a URL first','caution');return}
+  const el=scanBtn('url-result');
+  animPipe('up',5,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">↻</span> Scanning with AI…</div></div>`;
+    el.classList.add('show');
+    try{const r=await api('/api/scan/url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});renderResult(el,r);refreshStats();updateBadge()}
+    catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── Email Scanner ───────────────────────────────────────
+function fillEmail(subject,sender,replyto,body,attachments,links){
+  document.getElementById('eSubject').value=subject;
+  document.getElementById('eSender').value=sender;
+  document.getElementById('eReplyTo').value=replyto;
+  document.getElementById('eBody').value=body;
+  document.getElementById('eAttach').value=attachments;
+  document.getElementById('eLinks').value=links;
+  const d=sender.split('@')[1]||'';document.getElementById('eSenderDomain').value=d;
+  showPane('email');setTimeout(()=>document.getElementById('emailBtn').click(),50);
+}
+
+document.getElementById('emailBtn').addEventListener('click',async()=>{
+  const subj=document.getElementById('eSubject').value.trim();
+  const body=document.getElementById('eBody').value.trim();
+  if(!subj&&!body){toast('Enter subject or body','caution');return}
+  const el=scanBtn('email-result');
+  const payload={
+    subject:subj||null,sender:document.getElementById('eSender').value.trim()||null,
+    sender_domain:document.getElementById('eSenderDomain').value.trim()||null,
+    reply_to:document.getElementById('eReplyTo').value.trim()||null,
+    body:body||null,
+    has_attachments:document.getElementById('eAttach').value===''?null:document.getElementById('eAttach').value==='true',
+    num_links:document.getElementById('eLinks').value?parseInt(document.getElementById('eLinks').value):null
+  };
+  animPipe('ep',5,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">↻</span> Analyzing email…</div></div>`;
+    el.classList.add('show');
+    try{const r=await api('/api/scan/email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});renderResult(el,r);refreshStats();updateBadge()}
+    catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── Phone Scanner ───────────────────────────────────────
+function fillPhone(num,cc,ctx,org){
+  document.getElementById('phNum').value=num;document.getElementById('phCC').value=cc;
+  document.getElementById('phCtx').value=ctx;document.getElementById('phOrg').value=org;
+  showPane('phone');setTimeout(()=>document.getElementById('phoneBtn').click(),50);
+}
+document.getElementById('phoneBtn').addEventListener('click',async()=>{
+  const num=document.getElementById('phNum').value.trim();
+  if(!num){toast('Enter a phone number','caution');return}
+  const el=scanBtn('phone-result');
+  const payload={
+    number:num,country_code:document.getElementById('phCC').value.trim()||null,
+    call_context:document.getElementById('phCtx').value||null,
+    claimed_org:document.getElementById('phOrg').value.trim()||null
+  };
+  animPipe('pp',5,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">↻</span> Checking number…</div></div>`;
+    el.classList.add('show');
+    try{const r=await api('/api/scan/phone',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});renderResult(el,r);refreshStats();updateBadge()}
+    catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── SMS Scanner ─────────────────────────────────────────
+function fillSMS(msg,sender,hasLink,url){
+  document.getElementById('smsMsg').value=msg;document.getElementById('smsSender').value=sender;
+  document.getElementById('smsLink').value=hasLink;document.getElementById('smsUrl').value=url;
+  showPane('sms');setTimeout(()=>document.getElementById('smsBtn').click(),50);
+}
+document.getElementById('smsBtn').addEventListener('click',async()=>{
+  const msg=document.getElementById('smsMsg').value.trim();
+  if(!msg){toast('Enter SMS text','caution');return}
+  const el=scanBtn('sms-result');
+  const payload={
+    message:msg,sender:document.getElementById('smsSender').value.trim()||null,
+    has_link:document.getElementById('smsLink').value===''?null:document.getElementById('smsLink').value==='true',
+    link_url:document.getElementById('smsUrl').value.trim()||null
+  };
+  animPipe('sp',5,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">↻</span> Analyzing SMS…</div></div>`;
+    el.classList.add('show');
+    try{const r=await api('/api/scan/sms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});renderResult(el,r);refreshStats();updateBadge()}
+    catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── File Scanner ────────────────────────────────────────
+const drop=document.getElementById('drop'),fileInp=document.getElementById('fileInp');
+let picked=null;
+drop.addEventListener('click',()=>fileInp.click());
+fileInp.addEventListener('change',e=>{
+  picked=e.target.files[0]||null;
+  if(picked)drop.innerHTML=`<span class="dz-ico">📄</span><strong>${esc(picked.name)}</strong><small>${picked.size.toLocaleString()} bytes · ready to scan</small>`;
+});
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('drag')}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('drag')}));
+drop.addEventListener('drop',e=>{
+  const f=e.dataTransfer.files[0];
+  if(f){picked=f;drop.innerHTML=`<span class="dz-ico">📄</span><strong>${esc(f.name)}</strong><small>${f.size.toLocaleString()} bytes · ready to scan</small>`}
+});
+document.getElementById('fileClear').addEventListener('click',()=>{
+  picked=null;fileInp.value='';
+  drop.innerHTML=`<span class="dz-ico">📂</span><strong>Drop a file here or click to browse</strong><small>Checks extension, SHA-256 hash, magic bytes, VBA macros, script indicators</small>`;
+  const r=document.getElementById('file-result');r.innerHTML='';r.classList.remove('show');
+});
+document.getElementById('fileBtn').addEventListener('click',async()=>{
+  if(!picked){toast('Pick a file first','caution');return}
+  const el=scanBtn('file-result');
+  animPipe('fp',4,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">↻</span> Scanning file…</div></div>`;
+    el.classList.add('show');
+    try{
+      const fd=new FormData();fd.append('file',picked);
+      const r=await fetch(API+'/api/scan/file',{method:'POST',body:fd});
+      if(!r.ok)throw new Error(await r.text());
+      const res=await r.json();renderResult(el,res);refreshStats();updateBadge();
+    }catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── Merchant ────────────────────────────────────────────
+function fillMerchant(name,age,verified,country,complaints,web){
+  document.getElementById('mName').value=name;document.getElementById('mAge').value=age;
+  document.getElementById('mVerified').value=verified;document.getElementById('mCountry').value=country;
+  document.getElementById('mComplaints').value=complaints;document.getElementById('mWeb').value=web;
+  showPane('merchant');setTimeout(()=>document.getElementById('mBtn').click(),50);
+}
+function numOrNull(id){const v=document.getElementById(id).value;if(v==='')return null;const n=Number(v);return Number.isFinite(n)?n:null}
+function triState(id){const v=document.getElementById(id).value;return v==='true'?true:v==='false'?false:null}
+document.getElementById('mBtn').addEventListener('click',async()=>{
+  const name=document.getElementById('mName').value.trim();
+  if(!name){toast('Enter merchant name','caution');return}
+  const el=scanBtn('merchant-result');
+  const payload={name,account_id:document.getElementById('mId').value.trim()||null,country:document.getElementById('mCountry').value.trim()||null,
+    account_age_days:numOrNull('mAge'),verified:triState('mVerified'),complaints:numOrNull('mComplaints'),
+    avg_transaction_usd:numOrNull('mAvg'),website:document.getElementById('mWeb').value.trim()||null};
+  animPipe('mp',5,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">↻</span> Scoring merchant…</div></div>`;
+    el.classList.add('show');
+    try{const r=await api('/api/scan/merchant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});renderResult(el,r);refreshStats();updateBadge()}
+    catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── Social ──────────────────────────────────────────────
+function fillSocial(plat,user,display,bio,followers,following,verified,age,selling,dm){
+  document.getElementById('socPlat').value=plat;document.getElementById('socUser').value=user;
+  document.getElementById('socDisplay').value=display;document.getElementById('socBio').value=bio;
+  document.getElementById('socFollowers').value=followers;document.getElementById('socFollowing').value=following;
+  document.getElementById('socVerified').value=verified;document.getElementById('socAge').value=age;
+  document.getElementById('socSelling').value=selling;document.getElementById('socDM').value=dm;
+  showPane('social');setTimeout(()=>document.getElementById('socialBtn').click(),50);
+}
+document.getElementById('socialBtn').addEventListener('click',async()=>{
+  const user=document.getElementById('socUser').value.trim();
+  if(!user){toast('Enter a username','caution');return}
+  const el=scanBtn('social-result');
+  const payload={
+    platform:document.getElementById('socPlat').value,username:user,
+    display_name:document.getElementById('socDisplay').value.trim()||null,
+    bio:document.getElementById('socBio').value.trim()||null,
+    follower_count:numOrNull('socFollowers'),following_count:numOrNull('socFollowing'),
+    post_count:numOrNull('socPosts'),
+    account_age_days:numOrNull('socAge'),verified:triState('socVerified'),
+    profile_url:document.getElementById('socProfileUrl').value.trim()||null,
+    is_selling:document.getElementById('socSelling').value===''?null:document.getElementById('socSelling').value==='true',
+    dm_requesting_payment:document.getElementById('socDM').value==='true'
+  };
+  animPipe('sop',5,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">↻</span> Analyzing profile…</div></div>`;
+    el.classList.add('show');
+    try{const r=await api('/api/scan/social',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});renderResult(el,r);refreshStats();updateBadge()}
+    catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── QR ──────────────────────────────────────────────────
+function fillQR(url,ctx){
+  document.getElementById('qrUrl').value=url;document.getElementById('qrCtx').value=ctx;
+  showPane('qr');setTimeout(()=>document.getElementById('qrBtn').click(),50);
+}
+document.getElementById('qrBtn').addEventListener('click',async()=>{
+  const url=document.getElementById('qrUrl').value.trim();
+  if(!url){toast('Enter the decoded URL','caution');return}
+  const el=scanBtn('qr-result');
+  const payload={decoded_url:url,context:document.getElementById('qrCtx').value||null};
+  animPipe('qp',5,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">↻</span> Analyzing QR destination…</div></div>`;
+    el.classList.add('show');
+    try{const r=await api('/api/scan/qr',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});renderResult(el,r);refreshStats();updateBadge()}
+    catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── IP Scanner ──────────────────────────────────────────
+function fillIP(ip,ctx,port){
+  document.getElementById('ipAddr').value=ip;
+  document.getElementById('ipCtx').value=ctx;
+  document.getElementById('ipPort').value=port;
+  showPane('ip');setTimeout(()=>document.getElementById('ipBtn').click(),50);
+}
+document.getElementById('ipBtn').addEventListener('click',async()=>{
+  const ip=document.getElementById('ipAddr').value.trim();
+  if(!ip){toast('Enter an IP address','caution');return}
+  const el=scanBtn('ip-result');
+  const payload={
+    ip_address:ip,
+    context:document.getElementById('ipCtx').value||null,
+    port:document.getElementById('ipPort').value?parseInt(document.getElementById('ipPort').value):null
+  };
+  animPipe('ipp',6,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">&#x21BB;</span> Scanning IP&hellip;</div></div>`;
+    el.classList.add('show');
+    try{const r=await api('/api/scan/ip',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});renderResult(el,r);refreshStats();updateBadge()}
+    catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── Crypto Scanner ───────────────────────────────────────
+function fillCrypto(addr,coin,ctx,msg){
+  document.getElementById('cAddr').value=addr;
+  document.getElementById('cCoin').value=coin||'';
+  document.getElementById('cCtx').value=ctx||'';
+  document.getElementById('cMsg').value=msg||'';
+  showPane('crypto');setTimeout(()=>document.getElementById('cryptoBtn').click(),50);
+}
+document.getElementById('cryptoBtn').addEventListener('click',async()=>{
+  const addr=document.getElementById('cAddr').value.trim();
+  if(!addr){toast('Enter a wallet address','caution');return}
+  const el=scanBtn('crypto-result');
+  const payload={
+    address:addr,
+    coin:document.getElementById('cCoin').value||null,
+    context:document.getElementById('cCtx').value||null,
+    message:document.getElementById('cMsg').value.trim()||null
+  };
+  animPipe('crp',5,async()=>{
+    el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">&#x21BB;</span> Scanning address&hellip;</div></div>`;
+    el.classList.add('show');
+    try{const r=await api('/api/scan/crypto',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});renderResult(el,r);refreshStats();updateBadge()}
+    catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+  });
+});
+
+// ─── Bulk URL Scanner ─────────────────────────────────────
+async function runBulkScan(){
+  const raw=document.getElementById('bulkUrls').value;
+  const urls=raw.split('\n').map(u=>u.trim()).filter(Boolean);
+  if(!urls.length){toast('Paste at least one URL','caution');return;}
+  if(urls.length>20){toast('Maximum 20 URLs at a time','caution');return;}
+  const el=document.getElementById('bulk-result');
+  el.innerHTML=`<div class="result-top"><div class="scanning"><span class="spin">↻</span> Scanning ${urls.length} URL(s)…</div></div>`;
+  el.classList.add('show');
+  try{
+    const r=await api('/api/scan/bulk',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({urls,use_ai:false})});
+    const lvlBadge=l=>`<span class="badge badge-${l}">${l.toUpperCase()}</span>`;
+    let rows=r.results.map(item=>`
+      <tr>
+        <td style="word-break:break-all;max-width:320px">${esc(item.target||'')}</td>
+        <td>${lvlBadge(item.risk_level||'safe')}</td>
+        <td>${item.risk_score??0}</td>
+        <td style="font-size:.8em;color:var(--text-muted)">${(item.reasons||[]).slice(0,2).map(esc).join('<br>')}</td>
+      </tr>`).join('');
+    el.innerHTML=`
+      <div class="result-top" style="gap:.5rem;flex-wrap:wrap">
+        <span class="badge badge-danger">${r.danger} Danger</span>
+        <span class="badge badge-caution">${r.caution} Caution</span>
+        <span class="badge badge-safe">${r.safe} Safe</span>
+        <span style="margin-left:auto;color:var(--text-muted);font-size:.85em">Max score: ${r.max_score}</span>
+      </div>
+      <div style="overflow-x:auto;margin-top:.75rem">
+        <table style="width:100%;border-collapse:collapse;font-size:.88em">
+          <thead><tr style="text-align:left;color:var(--text-muted)">
+            <th style="padding:.4rem .6rem">URL</th><th>Risk</th><th>Score</th><th>Signals</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    refreshStats();updateBadge();
+  }catch(e){el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`}
+}
+
+// ─── Analytics ────────────────────────────────────────────
+let _trendChart=null,_distChart=null,_kindChart=null,_scoreDistChart=null,_timelineChart=null,_dashTimelineChart=null;
+
+// Shared palette for scan kinds
+const KIND_COLORS={url:'rgba(37,99,235,.75)',email:'rgba(124,58,237,.75)',phone:'rgba(217,119,6,.75)',
+  sms:'rgba(5,150,105,.75)',file:'rgba(220,38,38,.75)',merchant:'rgba(236,72,153,.75)',
+  social:'rgba(14,165,233,.75)',qr:'rgba(245,158,11,.75)',ip:'rgba(99,102,241,.75)',crypto:'rgba(16,185,129,.75)',
+  payment:'rgba(220,38,38,.8)'};
+function kindColor(k){return KIND_COLORS[k]||'rgba(107,114,128,.7)'}
+
+function mkChart(id,cfg){
+  const el=document.getElementById(id);if(!el)return null;
+  return new Chart(el.getContext('2d'),cfg);
+}
+
+async function refreshAnalytics(){
+  try{
+    const [beh,gs,trendRes,st,distRes,topRes,tlRes]=await Promise.all([
+      api('/api/behavior'),
+      api('/api/graph/stats'),
+      api('/api/stats/trend'),
+      api('/api/stats'),
+      api('/api/analytics/distribution'),
+      api('/api/analytics/top-targets?limit=15&hours=24'),
+      api('/api/analytics/timeline?hours=24&interval_min=60'),
+    ]);
+
+    // Behavior cards
+    const v=beh.velocity||{};
+    document.getElementById('beh-hr').textContent=v.last_hour??'—';
+    document.getElementById('beh-5m').textContent=v.last_5min??'—';
+    document.getElementById('beh-danger').textContent=v.danger_count??'—';
+    document.getElementById('beh-avg').textContent=v.avg_score??'—';
+    document.getElementById('gph-nodes').textContent=gs.total_nodes??'—';
+    document.getElementById('gph-edges').textContent=gs.total_edges??'—';
+
+    // ── Trend chart ──
+    const {buckets}=trendRes;
+    if(_trendChart)_trendChart.destroy();
+    _trendChart=mkChart('trendChart',{type:'bar',data:{labels:buckets.map(b=>b.label),datasets:[
+      {label:'Danger', data:buckets.map(b=>b.danger), backgroundColor:'rgba(220,38,38,.8)',borderRadius:4},
+      {label:'Caution',data:buckets.map(b=>b.caution),backgroundColor:'rgba(217,119,6,.7)',borderRadius:4},
+      {label:'Safe',   data:buckets.map(b=>b.safe),   backgroundColor:'rgba(5,150,105,.6)',borderRadius:4},
+    ]},options:{responsive:true,maintainAspectRatio:true,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{precision:0}}}}});
+
+    // ── Distribution doughnut ──
+    if(_distChart)_distChart.destroy();
+    _distChart=mkChart('distChart',{type:'doughnut',data:{labels:['Safe','Caution','Danger'],datasets:[{
+      data:[st.safe||0,st.caution||0,st.danger||0],
+      backgroundColor:['rgba(5,150,105,.8)','rgba(217,119,6,.8)','rgba(220,38,38,.8)'],borderWidth:2,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:true,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},cutout:'62%'}});
+
+    // ── Kind chart ──
+    const kinds=Object.entries(st.by_kind||{});
+    if(_kindChart)_kindChart.destroy();
+    _kindChart=mkChart('kindChart',{type:'bar',data:{labels:kinds.map(([k])=>k),datasets:[{
+      label:'Total',data:kinds.map(([,val])=>val.total||0),
+      backgroundColor:kinds.map(([k])=>kindColor(k)),borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,ticks:{precision:0}},y:{grid:{display:false}}}}});
+
+    // ── Score distribution chart ──
+    const dist=distRes.distribution||[];
+    const maxDistCount=Math.max(1,...dist.map(d=>d.count));
+    if(_scoreDistChart)_scoreDistChart.destroy();
+    _scoreDistChart=mkChart('scoreDistChart',{type:'bar',data:{labels:dist.map(d=>d.range),datasets:[{
+      label:'Alerts',data:dist.map(d=>d.count),
+      backgroundColor:dist.map(d=>{
+        const mid=d.min+5;
+        return mid>=65?'rgba(220,38,38,.75)':mid>=30?'rgba(217,119,6,.7)':'rgba(5,150,105,.65)';
+      }),borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:true,indexAxis:'y',plugins:{legend:{display:false}},
+        scales:{x:{beginAtZero:true,ticks:{precision:0}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+
+    // ── Timeline chart (24h per-kind) ──
+    const tlBuckets=tlRes.buckets||[];
+    const allKinds=[...new Set(tlBuckets.flatMap(b=>Object.keys(b.by_kind||{})))];
+    if(_timelineChart)_timelineChart.destroy();
+    _timelineChart=mkChart('timelineChart',{type:'line',data:{labels:tlBuckets.map(b=>b.label),datasets:allKinds.map(k=>({
+      label:k,data:tlBuckets.map(b=>b.by_kind[k]||0),
+      borderColor:kindColor(k),backgroundColor:kindColor(k).replace('.75','.15'),
+      borderWidth:2,pointRadius:2,fill:true,tension:.3}))},
+      options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'bottom',labels:{font:{size:11},boxWidth:12}}},
+        scales:{x:{grid:{display:false}},y:{beginAtZero:true,ticks:{precision:0},stacked:true}}}});
+
+    // ── Top targets table ──
+    const topTbody=document.getElementById('topTargetsTbody');
+    const targets=topRes.targets||[];
+    topTbody.innerHTML=targets.length?targets.map(t=>`<tr>
+      <td class="td-trunc" title="${esc(t.target)}">${esc(t.target)}</td>
+      <td><span class="kind-tag">${esc(t.kind)}</span></td>
+      <td><strong>${t.scan_count}</strong></td>
+      <td style="color:${t.avg_score>=65?'var(--danger)':t.avg_score>=30?'var(--caution)':'var(--safe)'}">${t.avg_score}</td>
+      <td><strong>${t.max_score}</strong></td>
+      <td style="color:var(--danger)">${t.danger_count}</td>
+      <td style="font-size:11px;color:var(--muted)">${fmtTime(t.last_seen)}</td>
+    </tr>`).join(''):`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:16px">No data — run some scans first.</td></tr>`;
+
+    // ── Baseline table ──
+    const baselines=beh.baselines||{};
+    const baseRows=Object.entries(baselines).filter(([,b])=>b.count>0).map(([kind,b])=>`<tr>
+      <td><span class="kind-tag">${esc(kind)}</span></td>
+      <td><strong>${b.mean}</strong></td><td>${b.std}</td>
+      <td style="color:${b.high_risk_pct>30?'var(--danger)':b.high_risk_pct>15?'var(--caution)':'var(--safe)'}">${b.high_risk_pct}%</td>
+      <td>${b.count}</td>
+    </tr>`).join('');
+    document.getElementById('baselineTbody').innerHTML=baseRows||`<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:16px">No data yet — run some scans first.</td></tr>`;
+
+  }catch(err){console.error('Analytics error:',err)}
+}
+
+// ─── Alert Log ───────────────────────────────────────────
+function lvBadge(lv){return`<span class="badge ${lv||'safe'}" style="padding:2px 8px;font-size:10px">${(lv||'safe').toUpperCase()}</span>`}
+
+const _alertsState={page:1,per_page:50,kind:'',level:'',search:'',min_score:'',max_score:''};
+
+async function refreshAlerts(){
+  try{
+    const qs=new URLSearchParams({page:_alertsState.page,per_page:_alertsState.per_page});
+    if(_alertsState.kind)  qs.set('kind',_alertsState.kind);
+    if(_alertsState.level) qs.set('level',_alertsState.level);
+    if(_alertsState.search)qs.set('search',_alertsState.search);
+    if(_alertsState.min_score)qs.set('min_score',_alertsState.min_score);
+    if(_alertsState.max_score)qs.set('max_score',_alertsState.max_score);
+
+    const data=await api('/api/alerts?'+qs.toString());
+    const {total,page,pages,alerts}=data;
+
+    document.getElementById('alertCountLine').textContent=`${total} alert${total!==1?'s':''} total`;
+    document.getElementById('pgInfo').textContent=`Page ${page} / ${pages}`;
+    document.getElementById('pgPrev').disabled=page<=1;
+    document.getElementById('pgNext').disabled=page>=pages;
+
+    const body=document.getElementById('alertsBody');
+    if(!alerts.length){
+      body.innerHTML=`<tr><td colspan="7"><div class="empty"><span class="empty-ico">📭</span><p>No alerts match your filters.</p></div></td></tr>`;
+      return;
+    }
+    body.innerHTML=alerts.map(a=>`<tr>
+      <td style="white-space:nowrap;font-size:12px;color:var(--muted)">${fmtTime(a.timestamp)}</td>
+      <td><span class="kind-tag">${esc(a.kind)}</span></td>
+      <td class="td-trunc" title="${esc(a.target)}">${esc(a.target)}</td>
+      <td><strong style="color:${a.risk_level==='danger'?'var(--danger)':a.risk_level==='caution'?'var(--caution)':'var(--safe)'}">${a.risk_score}</strong></td>
+      <td>${lvBadge(a.risk_level)}</td>
+      <td class="td-mono">${(a.ledger_hash||'').slice(0,10)}…</td>
+      <td><div class="tbl-actions">
+        <button class="btn-icon" title="${esc(a.notes||'Add notes')}" onclick="openNotes('${esc(a.id)}','${esc(a.notes||'')}')">📝</button>
+        <button class="btn-icon del" title="Delete alert" onclick="doDeleteAlert('${esc(a.id)}',this)">🗑</button>
+      </div></td>
+    </tr>`).join('');
+  }catch(err){console.error('refreshAlerts:',err)}
+}
+
+async function updateBadge(){
+  try{
+    const{total}=await api('/api/alerts?page=1&per_page=1');
+    const b=document.getElementById('alertBadge');
+    b.textContent=total>99?'99+':total;
+    b.classList.toggle('show',total>0);
+  }catch{}
+}
+
+async function doDeleteAlert(id,btn){
+  if(!confirm('Delete this alert?'))return;
+  try{
+    await api('/api/alerts/'+id,{method:'DELETE'});
+    btn.closest('tr').remove();
+    toast('Alert deleted','safe');
+    updateBadge();refreshStats();
+  }catch(e){toast('Delete failed: '+e.message,'danger')}
+}
+
+// Notes modal
+let _notesAlertId=null;
+function openNotes(id,existing){
+  _notesAlertId=id;
+  document.getElementById('notesAlertId').textContent='Alert ID: '+id;
+  document.getElementById('notesText').value=existing||'';
+  document.getElementById('notesModal').style.display='flex';
+  setTimeout(()=>document.getElementById('notesText').focus(),50);
+}
+function closeNotes(){document.getElementById('notesModal').style.display='none';_notesAlertId=null}
+document.getElementById('saveNotesBtn').addEventListener('click',async()=>{
+  if(!_notesAlertId)return;
+  const notes=document.getElementById('notesText').value;
+  try{
+    await api('/api/alerts/'+_notesAlertId+'/notes',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({notes})});
+    toast('Notes saved','safe');closeNotes();refreshAlerts();
+  }catch(e){toast('Save failed: '+e.message,'danger')}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeNotes()});
+
+// Filter controls
+document.getElementById('filterApply').addEventListener('click',()=>{
+  _alertsState.page=1;
+  _alertsState.kind=document.getElementById('filterKind').value;
+  _alertsState.level=document.getElementById('filterLevel').value;
+  _alertsState.search=document.getElementById('filterSearch').value.trim();
+  _alertsState.min_score=document.getElementById('filterMinScore').value;
+  _alertsState.max_score=document.getElementById('filterMaxScore').value;
+  refreshAlerts();
+});
+document.getElementById('filterReset').addEventListener('click',()=>{
+  Object.assign(_alertsState,{page:1,kind:'',level:'',search:'',min_score:'',max_score:''});
+  ['filterKind','filterLevel','filterSearch','filterMinScore','filterMaxScore'].forEach(id=>{document.getElementById(id).value=''});
+  refreshAlerts();
+});
+document.getElementById('refreshBtn').addEventListener('click',refreshAlerts);
+document.getElementById('pgPrev').addEventListener('click',()=>{if(_alertsState.page>1){_alertsState.page--;refreshAlerts()}});
+document.getElementById('pgNext').addEventListener('click',()=>{_alertsState.page++;refreshAlerts()});
+
+document.getElementById('clearBtn').addEventListener('click',async()=>{
+  if(!confirm('Clear all alerts, scan history, and the ledger? This cannot be undone.'))return;
+  const secret = window._fraudxClearKey || '';
+  const res = await fetch('/api/alerts/clear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({secret})});
+  if(res.status===403){toast('Clear blocked: invalid secret key','danger');return;}
+  Object.assign(_alertsState,{page:1,kind:'',level:'',search:'',min_score:'',max_score:''});
+  toast('All alerts cleared','safe');
+  refreshAlerts();refreshLedger();refreshStats();updateBadge();
+});
+
+document.getElementById('exportBtn').addEventListener('click',()=>{
+  const params=new URLSearchParams();
+  if(_alertsState.kind)      params.set('kind',_alertsState.kind);
+  if(_alertsState.level)     params.set('level',_alertsState.level);
+  if(_alertsState.search)    params.set('search',_alertsState.search);
+  if(_alertsState.min_score) params.set('min_score',_alertsState.min_score);
+  if(_alertsState.max_score) params.set('max_score',_alertsState.max_score);
+  const url='/api/export'+(params.toString()?'?'+params.toString():'');
+  const a=document.createElement('a');
+  a.href=url; a.download='fraudx-alerts.csv'; a.click();
+});
+
+// ─── Ledger ──────────────────────────────────────────────
+async function refreshLedger(){
+  try{
+    const{blocks,length,valid}=await api('/api/ledger');
+    document.getElementById('ledgerLen').textContent=`${length} block${length===1?'':'s'}`;
+    document.getElementById('st-blocks').textContent=length;
+    const vEl=document.getElementById('ledgerValidity');
+    vEl.textContent=valid?'⛓ Integrity: Valid':'⚠ Integrity: COMPROMISED';
+    vEl.className=`integrity-badge ${valid?'ok':'fail'}`;
+    const c=document.getElementById('ledgerBlocks');
+    if(!blocks.length){c.innerHTML=`<div class="empty"><span class="empty-ico">⛓</span><p>No blocks yet.</p></div>`;return}
+    c.innerHTML=[...blocks].reverse().map((b,i,arr)=>`
+      <div class="ledger-item">
+        <div class="block-num">#${b.index}</div>
+        <div class="block-meta">
+          <div class="block-id">${esc(b.alert_id?b.alert_id.slice(0,8)+'…':'—')} · ${fmtDate(b.timestamp)}</div>
+          <div class="block-hash">hash: ${b.block_hash}</div>
+          <div class="block-hash" style="color:var(--muted2)">prev: ${b.prev_hash==='GENESIS'?'◼ GENESIS':b.prev_hash}</div>
+        </div>
+      </div>
+      ${i<arr.length-1?'<div class="chain-arrow">↑</div>':''}
+    `).join('');
+  }catch{}
+}
+
+// ─── Stats ───────────────────────────────────────────────
+async function refreshStats(){
+  try{
+    const{total=0,safe=0,caution=0,danger=0}=await api('/api/stats');
+    document.getElementById('st-total').textContent=total;
+    document.getElementById('st-safe').textContent=safe;
+    document.getElementById('st-caution').textContent=caution;
+    document.getElementById('st-danger').textContent=danger;
+    document.getElementById('totalScans').textContent=total;
+    document.getElementById('dangerCount').textContent=danger;
+    document.getElementById('dangerChip').style.display=danger>0?'flex':'none';
+    refreshLedger();
+  }catch{}
+}
+
+// ─── Dashboard ───────────────────────────────────────────
+async function refreshDashboard(){
+  try{
+    const [st,feedRes,distRes,tlRes,ledRes]=await Promise.all([
+      api('/api/stats'),
+      api('/api/alerts?level=danger&per_page=8&page=1'),
+      api('/api/analytics/distribution'),
+      api('/api/analytics/timeline?hours=24&interval_min=60'),
+      api('/api/ledger'),
+    ]);
+
+    // Stat cards
+    document.getElementById('db-total').textContent=st.total||0;
+    document.getElementById('db-safe').textContent=st.safe||0;
+    document.getElementById('db-caution').textContent=st.caution||0;
+    document.getElementById('db-danger').textContent=st.danger||0;
+    document.getElementById('db-blocks').textContent=ledRes.length||0;
+
+    // Also update global topbar stats
+    document.getElementById('st-total').textContent=st.total||0;
+    document.getElementById('st-safe').textContent=st.safe||0;
+    document.getElementById('st-caution').textContent=st.caution||0;
+    document.getElementById('st-danger').textContent=st.danger||0;
+    document.getElementById('totalScans').textContent=st.total||0;
+    document.getElementById('dangerCount').textContent=st.danger||0;
+    document.getElementById('dangerChip').style.display=(st.danger||0)>0?'flex':'none';
+
+    // Live threat feed
+    const feed=document.getElementById('db-feed');
+    const topAlerts=feedRes.alerts||[];
+    document.getElementById('db-feed-ts').textContent='Updated '+fmtTime(Date.now()/1000);
+    if(!topAlerts.length){
+      feed.innerHTML=`<div class="empty" style="padding:20px 0"><span class="empty-ico">✅</span><p>No active threats</p></div>`;
+    }else{
+      feed.innerHTML=topAlerts.map(a=>`
+        <div class="feed-item">
+          <div class="feed-score ${a.risk_level}">${a.risk_score}</div>
+          <div style="flex:1;min-width:0">
+            <div class="feed-kind">${esc(a.kind)}</div>
+            <div class="feed-target" title="${esc(a.target)}">${esc(a.target)}</div>
+            <div class="feed-time">${fmtDate(a.timestamp)}</div>
+          </div>
+          ${lvBadge(a.risk_level)}
+        </div>`).join('');
+    }
+
+    // Score distribution inline bars
+    const dist=distRes.distribution||[];
+    const maxCnt=Math.max(1,...dist.map(d=>d.count));
+    document.getElementById('db-dist-bars').innerHTML=dist.map(d=>{
+      const pct=d.count?Math.max(4,Math.round(d.count/maxCnt*100)):0;
+      const mid=d.min+5;
+      const col=mid>=65?'rgba(220,38,38,.75)':mid>=30?'rgba(217,119,6,.75)':'rgba(5,150,105,.7)';
+      return`<div class="dist-row">
+        <span class="dist-lbl">${d.range}</span>
+        <div class="dist-track"><div class="dist-fill" style="width:${pct}%;background:${col}"></div></div>
+        <span class="dist-cnt">${d.count}</span>
+      </div>`;
+    }).join('');
+
+    // 24h timeline line chart
+    const tlBuckets=tlRes.buckets||[];
+    const allKinds=[...new Set(tlBuckets.flatMap(b=>Object.keys(b.by_kind||{})))];
+    if(_dashTimelineChart)_dashTimelineChart.destroy();
+    _dashTimelineChart=mkChart('dashTimelineChart',{type:'line',data:{labels:tlBuckets.map(b=>b.label),datasets:allKinds.map(k=>({
+      label:k,data:tlBuckets.map(b=>b.by_kind[k]||0),
+      borderColor:kindColor(k),backgroundColor:kindColor(k).replace('.75','.12'),
+      borderWidth:2,pointRadius:2,fill:true,tension:.3}))},
+      options:{responsive:true,maintainAspectRatio:true,interaction:{mode:'index',intersect:false},
+        plugins:{legend:{position:'bottom',labels:{font:{size:10},boxWidth:10}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{beginAtZero:true,ticks:{precision:0},stacked:true}}}});
+
+  }catch(err){console.error('Dashboard error:',err)}
+}
+
+// ─── Health ──────────────────────────────────────────────
+(async()=>{
+  const dot=document.getElementById('hDot'),sDot=document.getElementById('sDot');
+  const txt=document.getElementById('hText'),sSt=document.getElementById('sStatus');
+  try{
+    const h=await api('/api/health');
+    dot.style.background='var(--safe)';sDot.style.background='var(--safe)';
+    txt.textContent=`Online · AI: ${h.ai_model?'ready':'offline'}`;
+    sSt.textContent='System online';
+  }catch{
+    dot.style.background='var(--danger)';sDot.style.background='var(--danger)';
+    txt.textContent='Backend offline';sSt.textContent='Offline — run uvicorn main:app --port 8000';
+  }
+})();
+
+// ─── WebSocket — real-time alert stream ──────────────────
+let _ws = null, _wsRetry = 0;
+
+function _wsConnect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  _ws = new WebSocket(`${proto}//${location.host}/ws/alerts`);
+
+  _ws.onopen = () => {
+    _wsRetry = 0;
+    document.getElementById('sDot').style.background = 'var(--safe)';
+    document.getElementById('sStatus').textContent = 'Live · real-time';
+    // Send keepalive every 25 s
+    _ws._ping = setInterval(() => { if (_ws.readyState === 1) _ws.send('ping'); }, 25000);
+  };
+
+  _ws.onmessage = ({data}) => {
+    let alert;
+    try { alert = JSON.parse(data); } catch { return; }
+
+    // Instant badge + stats update
+    updateBadge();
+    refreshStats();
+
+    // Push directly into live feed without full page re-fetch
+    _pushFeedItem(alert);
+    _pushTicker(alert);
+
+    // Refresh alerts pane if open (so table stays current)
+    const active = document.querySelector('.pane.active');
+    if (active && active.id === 'pane-alerts') refreshAlerts();
+
+    // Toast for significant threats
+    if (alert.risk_level === 'danger') {
+      toast(`🚨 ${(alert.kind||'').toUpperCase()} threat detected — score ${alert.risk_score}`, 'danger');
+    } else if (alert.risk_level === 'caution') {
+      toast(`⚠️ ${(alert.kind||'').toUpperCase()} caution — score ${alert.risk_score}`, 'caution');
+    }
+  };
+
+  _ws.onclose = () => {
+    clearInterval(_ws._ping);
+    document.getElementById('sDot').style.background = 'var(--muted2)';
+    document.getElementById('sStatus').textContent = 'Reconnecting…';
+    // Exponential back-off: 1s, 2s, 4s … capped at 30s
+    const delay = Math.min(30000, 1000 * Math.pow(2, _wsRetry++));
+    setTimeout(_wsConnect, delay);
+  };
+
+  _ws.onerror = () => _ws.close();
+}
+
+// ─── Auth guard ──────────────────────────────────────────────
+(function(){
+  const token = localStorage.getItem('fraudx_token');
+  if(!token){ window.location.href='/login'; return; }
+  // Load user info into topbar
+  const user = (() => { try { return JSON.parse(localStorage.getItem('fraudx_user')||'{}'); } catch{ return {}; } })();
+  if(user.name){
+    const wrap = document.getElementById('userMenuWrap');
+    wrap.style.display='flex';
+    document.getElementById('userInitial').textContent = user.name.charAt(0).toUpperCase();
+    document.getElementById('ddName').textContent  = user.name;
+    document.getElementById('ddEmail').textContent = user.email||'';
+    if(user.avatar){
+      document.getElementById('userAvatarBtn').innerHTML=`<img src="${user.avatar}" alt="avatar"/>`;
+    }
+  }
+  // Silently verify token with server every 5 min
+  async function verifyToken(){
+    try{
+      const r = await fetch('/auth/me',{headers:{Authorization:'Bearer '+token}});
+      if(!r.ok){ localStorage.removeItem('fraudx_token'); window.location.href='/login'; }
+    }catch{}
+  }
+  verifyToken();
+  setInterval(verifyToken, 300000);
+})();
+
+function toggleUserMenu(){
+  document.getElementById('userDropdown').classList.toggle('open');
+}
+document.addEventListener('click', e => {
+  if(!document.getElementById('userMenuWrap').contains(e.target)){
+    document.getElementById('userDropdown').classList.remove('open');
+  }
+});
+function doLogout(){
+  localStorage.removeItem('fraudx_token');
+  localStorage.removeItem('fraudx_user');
+  window.location.href='/login';
+}
+
+// ─── Live feed direct push (WS-driven, no re-fetch) ──────────
+const _FEED_MAX = 8;
+function _pushFeedItem(a){
+  const feed = document.getElementById('db-feed');
+  if(!feed) return;
+  // Remove "no threats" placeholder if present
+  const empty = feed.querySelector('.empty');
+  if(empty) empty.remove();
+
+  const div = document.createElement('div');
+  div.className = 'feed-item ws-new';
+  div.innerHTML = `
+    <div class="feed-score ${a.risk_level||'safe'}">${a.risk_score||0}</div>
+    <div style="flex:1;min-width:0">
+      <div class="feed-kind">${esc(a.kind||'')}</div>
+      <div class="feed-target" title="${esc(a.target||'')}">${esc(a.target||'')}</div>
+      <div class="feed-time">${fmtDate(a.timestamp||Date.now()/1000)}</div>
+    </div>
+    ${lvBadge(a.risk_level)}`;
+  feed.insertBefore(div, feed.firstChild);
+
+  // Keep max items
+  while(feed.children.length > _FEED_MAX) feed.removeChild(feed.lastChild);
+
+  // Update feed timestamp
+  const ts = document.getElementById('db-feed-ts');
+  if(ts) ts.textContent = 'Updated '+fmtTime(Date.now()/1000);
+
+  // Animate stat bump for danger
+  if(a.risk_level === 'danger'){
+    const el = document.getElementById('db-danger');
+    if(el){ el.classList.remove('stat-bump'); void el.offsetWidth; el.classList.add('stat-bump'); }
+  }
+}
+
+// ─── Live ticker ─────────────────────────────────────────────
+const _tickerItems = [];
+function _pushTicker(a){
+  const ticker = document.getElementById('liveTicker');
+  ticker.classList.remove('hidden');
+
+  const label = `${(a.kind||'scan').toUpperCase()} · ${esc(truncTicker(a.target||''))} · score ${a.risk_score||0}`;
+  _tickerItems.push({ label, level: a.risk_level||'safe', ts: fmtTime(Date.now()/1000) });
+  if(_tickerItems.length > 20) _tickerItems.shift();
+  _rebuildTicker();
+}
+function truncTicker(s){ return s.length > 40 ? s.slice(0,40)+'…' : s; }
+function _rebuildTicker(){
+  const inner = document.getElementById('tickerInner');
+  // Duplicate items for seamless scroll
+  const html = [..._tickerItems, ..._tickerItems].map(it =>
+    `<span class="ticker-item"><span class="ticker-dot ${it.level}"></span>${it.label} <span style="opacity:.5">${it.ts}</span></span>`
+  ).join('');
+  inner.innerHTML = html || '<span class="ticker-item" style="opacity:.4">Monitoring for threats…</span>';
+}
+
+// ─── Payment Scanner ──────────────────────────────────────────
+function fillPayment(url, domain, title, merchant, hasForm, formAction){
+  document.getElementById('pmtUrl').value        = url||'';
+  document.getElementById('pmtDomain').value     = domain||'';
+  document.getElementById('pmtTitle').value      = title||'';
+  document.getElementById('pmtMerchant').value   = merchant||'';
+  document.getElementById('pmtHasForm').value    = hasForm ? 'true' : 'false';
+  document.getElementById('pmtFormAction').value = formAction||'';
+  showPane('payment');
+  setTimeout(() => document.getElementById('pmtBtn').click(), 80);
+}
+
+function renderPaymentResult(el, res){
+  const lv  = res.risk_level || 'safe';
+  const sc  = res.risk_score  ?? 0;
+  const gw  = res.gateway_info || {};
+  const isTrusted = gw.is_trusted || res.is_trusted_gateway;
+  const verifiedGw = gw.verified_gateway || res.verified_gateway || '';
+
+  // Gateway status badge
+  let badgeCls, badgeIcon, badgeText;
+  if(isTrusted && verifiedGw){
+    badgeCls='trusted'; badgeIcon='✅'; badgeText=`Verified Gateway — ${verifiedGw}`;
+  } else if(lv==='danger'){
+    badgeCls='danger';  badgeIcon='🚨'; badgeText='Fraudulent Payment Page';
+  } else if(lv==='caution'){
+    badgeCls='caution'; badgeIcon='⚠️'; badgeText='Suspicious Payment Page';
+  } else {
+    badgeCls='trusted'; badgeIcon='🛡️'; badgeText='Payment Page — Low Risk';
+  }
+
+  const gwCard = `
+    <div class="gateway-card">
+      <span class="gateway-icon">${badgeIcon}</span>
+      <div>
+        <div class="gateway-info-label">Gateway Status</div>
+        <div class="gateway-info-val">${badgeText}</div>
+        ${gw.scheme?`<div style="font-size:11px;color:var(--muted);margin-top:2px">Protocol: <strong>${gw.scheme.toUpperCase()}</strong>${gw.scheme==='http'?' ⚠️ Insecure':' ✅'}</div>`:''}
+      </div>
+    </div>`;
+
+  // Render standard reasons + gateway card
+  const reasons = (res.reasons||[]).map(r => {
+    const ok = r.startsWith('No ')||r.includes('whitelist')||r.includes('Trusted');
+    const ico = ok ? '✅' : '⚑';
+    return `<div class="reason"><span class="reason-ic">${ico}</span><span>${esc(r)}</span></div>`;
+  }).join('');
+
+  const ai = res.ai_analysis && res.ai_analysis !== 'AI analysis unavailable (offline mode)' && res.ai_analysis !== 'AI analysis unavailable'
+    ? `<div class="ai-box"><div class="ai-label">✨ AI Analysis</div><div class="ai-text">${esc(res.ai_analysis)}</div></div>` : '';
+  const recClass = lv==='danger'?'danger-rec':lv==='caution'?'caution-rec':'';
+  const hashHtml = res.ledger_hash ? `<div class="hash-row">⛓ Block: ${res.ledger_hash.slice(0,20)}…</div>` : '';
+  const xaiHtml  = renderXAI(res.explanation);
+
+  el.innerHTML = `
+    <div class="result-top">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+          <span class="score-big ${lv}">${sc}</span>
+          <div>
+            <div class="score-denom">/ 100</div>
+            <span class="badge ${lv}">${lv}</span>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(res.target||'')}</div>
+      </div>
+    </div>
+    <div class="result-body">
+      <div class="meter"><div class="meter-fill ${lv}" style="width:0%"></div></div>
+      ${gwCard}
+      ${ai}
+      <div class="reasons">${reasons}</div>
+      <div class="rec ${recClass}"><strong>Recommendation:</strong> ${esc(res.recommendation||res.payment?.recommendation||'')}</div>
+      ${hashHtml}
+      ${xaiHtml}
+    </div>`;
+  el.classList.add('show');
+  setTimeout(()=>{ const f=el.querySelector('.meter-fill'); if(f) f.style.width=sc+'%'; },60);
+}
+
+async function doPaymentScan(){
+  const url = document.getElementById('pmtUrl').value.trim();
+  if(!url){ toast('Enter a payment page URL','caution'); return; }
+  const el = scanBtn('pmt-result');
+  const btn = document.getElementById('pmtBtn');
+  btn.disabled = true;
+  animPipe('pmt',6, async () => {
+    el.innerHTML = `<div class="result-top"><div class="scanning"><span class="spin">↻</span> Verifying payment gateway…</div></div>`;
+    el.classList.add('show');
+    const payload = {
+      url,
+      domain:           document.getElementById('pmtDomain').value.trim()||null,
+      page_title:       document.getElementById('pmtTitle').value.trim()||null,
+      merchant_name:    document.getElementById('pmtMerchant').value.trim()||null,
+      has_payment_form: document.getElementById('pmtHasForm').value === 'true',
+      form_action_url:  document.getElementById('pmtFormAction').value.trim()||null,
+      use_ai:           true,
+    };
+    try{
+      const r = await api('/api/scan/payment',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      renderPaymentResult(el, r);
+      refreshStats(); updateBadge();
+    }catch(e){
+      el.innerHTML=`<div class="result-top" style="color:var(--danger)">Error: ${esc(e.message)}</div>`;
+    }
+    btn.disabled = false;
+  });
+}
+
+// ─── Boot ─────────────────────────────────────────────────────
+_wsConnect();
+refreshDashboard();
+// Periodic fallback refresh every 30 s (WebSocket handles instant, this covers chart data)
+setInterval(refreshStats, 30000);
+
+// ═══════════════════════════════════════════════════════════════
+// REAL-TIME DETECTION — Multi-Channel WebSocket Integration
+// Connects /ws/transactions, /ws/system, /ws/activity without
+// changing any existing UI elements or styles.
+// ═══════════════════════════════════════════════════════════════
+
+let _liveBlockedCount = 0;
+let _liveTxnCount     = 0;
+
+// ── /ws/transactions — live fraud transaction stream ──────────
+let _wsTxn = null, _wsTxnRetry = 0;
+
+function _wsTxnConnect() {
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  _wsTxn = new WebSocket(proto + '//' + location.host + '/ws/transactions');
+
+  _wsTxn.onopen = () => {
+    _wsTxnRetry = 0;
+    _wsTxn._ping = setInterval(() => {
+      if (_wsTxn.readyState === 1) _wsTxn.send('ping');
+    }, 25000);
+  };
+
+  _wsTxn.onmessage = function(e) {
+    var txn;
+    try { txn = JSON.parse(e.data); } catch(ex) { return; }
+    if (txn.type === 'pong' || txn.type === 'heartbeat') return;
+
+    _liveTxnCount++;
+
+    var levelMap = { SAFE: 'safe', CAUTION: 'caution', DANGER: 'danger', BLOCKED: 'danger' };
+    var level = levelMap[txn.status] || 'safe';
+    var score = txn.risk_score || 0;
+
+    _pushFeedItem({
+      kind:       'txn',
+      target:     txn.txn_id + ' · ' + (txn.merchant||'') + ' · ' + (txn.country||''),
+      risk_score:  score,
+      risk_level:  level,
+      timestamp:   txn.timestamp || Date.now() / 1000,
+    });
+
+    _pushTicker({
+      kind:       'txn',
+      target:     txn.txn_id + ' · ' + txn.merchant,
+      risk_score:  score,
+      risk_level:  level,
+    });
+
+    if (txn.status === 'BLOCKED') {
+      _liveBlockedCount++;
+      var blkEl = document.getElementById('db-blocks');
+      if (blkEl) blkEl.textContent = _liveBlockedCount;
+      toast('BLOCKED: ' + txn.txn_id + ' — ' + txn.reason, 'danger');
+    } else if (txn.status === 'DANGER' && score >= 70) {
+      toast('DANGER: ' + txn.txn_id + ' · ' + txn.merchant + ' · score ' + score, 'caution');
+    }
+  };
+
+  _wsTxn.onclose = function() {
+    clearInterval(_wsTxn._ping);
+    var delay = Math.min(30000, 1000 * Math.pow(2, _wsTxnRetry++));
+    setTimeout(_wsTxnConnect, delay);
+  };
+
+  _wsTxn.onerror = function() { _wsTxn.close(); };
+}
+
+// ── /ws/system — system metrics ───────────────────────────────
+let _wsSys = null, _wsSysRetry = 0;
+
+function _wsSysConnect() {
+  var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  _wsSys = new WebSocket(proto + '//' + location.host + '/ws/system');
+
+  _wsSys.onopen = function() {
+    _wsSysRetry = 0;
+    _wsSys._ping = setInterval(function() {
+      if (_wsSys.readyState === 1) _wsSys.send('ping');
+    }, 25000);
+  };
+
+  _wsSys.onmessage = function(e) {
+    var m;
+    try { m = JSON.parse(e.data); } catch(ex) { return; }
+    if (m.type === 'pong' || m.type === 'heartbeat') return;
+    var sDot = document.getElementById('sDot');
+    var sSt  = document.getElementById('sStatus');
+    if (sDot) sDot.style.background = 'var(--safe)';
+    if (sSt) {
+      var clients = 0;
+      if (m.ws_clients) {
+        Object.keys(m.ws_clients).forEach(function(k){ clients += m.ws_clients[k]; });
+      }
+      sSt.textContent = 'Live · ' + (m.alerts_total||0) + ' alerts · ' + clients + ' clients';
+    }
+  };
+
+  _wsSys.onclose = function() {
+    clearInterval(_wsSys._ping);
+    var delay = Math.min(30000, 1000 * Math.pow(2, _wsSysRetry++));
+    setTimeout(_wsSysConnect, delay);
+  };
+
+  _wsSys.onerror = function() { _wsSys.close(); };
+}
+
+// ── /ws/activity — IDS activity feed ─────────────────────────
+let _wsAct = null, _wsActRetry = 0;
+
+function _wsActConnect() {
+  var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  _wsAct = new WebSocket(proto + '//' + location.host + '/ws/activity');
+
+  _wsAct.onopen = function() {
+    _wsActRetry = 0;
+    _wsAct._ping = setInterval(function() {
+      if (_wsAct.readyState === 1) _wsAct.send('ping');
+    }, 25000);
+  };
+
+  _wsAct.onmessage = function(e) {
+    var evt;
+    try { evt = JSON.parse(e.data); } catch(ex) { return; }
+    if (evt.type === 'pong' || evt.type === 'heartbeat') return;
+    var levelMap = { INFO: 'safe', WARNING: 'caution', DANGER: 'danger', CRITICAL: 'danger' };
+    var level = levelMap[evt.level] || 'safe';
+    _pushTicker({
+      kind:       'ids',
+      target:     '[' + evt.level + '] ' + evt.message,
+      risk_score:  level === 'danger' ? 80 : level === 'caution' ? 45 : 10,
+      risk_level:  level,
+    });
+    if (evt.level === 'CRITICAL' || evt.level === 'DANGER') {
+      toast('[' + evt.level + '] ' + evt.message, 'danger');
+    }
+  };
+
+  _wsAct.onclose = function() {
+    clearInterval(_wsAct._ping);
+    var delay = Math.min(30000, 1000 * Math.pow(2, _wsActRetry++));
+    setTimeout(_wsActConnect, delay);
+  };
+
+  _wsAct.onerror = function() { _wsAct.close(); };
+}
+
+_wsTxnConnect();
+_wsSysConnect();
+_wsActConnect();
+
+// ═══════════════════════════════════════════════════════════════
+// NEW IMPROVEMENTS — added on top of existing UI without changes
+// ═══════════════════════════════════════════════════════════════
+
+// ── Sound alerts ──────────────────────────────────────────────
+var _soundOn = true;
+var _audioCtx = null;
+
+function _beep(freq, dur, vol) {
+  try {
+    if (!_soundOn) return;
+    if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var osc = _audioCtx.createOscillator();
+    var gain = _audioCtx.createGain();
+    osc.connect(gain); gain.connect(_audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = freq || 880;
+    gain.gain.setValueAtTime(vol || 0.15, _audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, _audioCtx.currentTime + (dur || 0.3));
+    osc.start(_audioCtx.currentTime);
+    osc.stop(_audioCtx.currentTime + (dur || 0.3));
+  } catch(e) {}
+}
+
+function rtToggleSound() {
+  _soundOn = !_soundOn;
+  var btn = document.getElementById('soundToggleBtn');
+  if (btn) btn.textContent = _soundOn ? 'ON' : 'OFF';
+}
+
+// ── Desktop notifications ──────────────────────────────────────
+var _notifOn = false;
+
+function rtToggleNotif() {
+  if (!_notifOn) {
+    if (!('Notification' in window)) { alert('Notifications not supported.'); return; }
+    Notification.requestPermission().then(function(p) {
+      _notifOn = p === 'granted';
+      var btn = document.getElementById('notifToggleBtn');
+      if (btn) btn.textContent = _notifOn ? 'ON' : 'OFF';
+    });
+  } else {
+    _notifOn = false;
+    var btn = document.getElementById('notifToggleBtn');
+    if (btn) btn.textContent = 'OFF';
+  }
+}
+
+function _desktopNotif(title, body) {
+  if (_notifOn && Notification.permission === 'granted') {
+    new Notification(title, { body: body, icon: '/favicon.ico' });
+  }
+}
+
+// ── Live counters ──────────────────────────────────────────────
+var _rtBlocked = 0, _rtDanger = 0, _rtTxnTotal = 0;
+
+function _rtUpdateCounters() {
+  var b = document.getElementById('rtBlockedCnt');
+  var d = document.getElementById('rtDangerCnt');
+  var t = document.getElementById('rtTxnCnt');
+  if (b) b.textContent = _rtBlocked;
+  if (d) d.textContent = _rtDanger;
+  if (t) t.textContent = _rtTxnTotal;
+
+  var badge = document.getElementById('txnBlockedBadge');
+  if (badge) {
+    badge.textContent = _rtBlocked + ' BLOCKED';
+    badge.style.display = _rtBlocked > 0 ? 'inline' : 'none';
+  }
+}
+
+// ── Live transaction table ─────────────────────────────────────
+var _TXN_MAX = 50;
+
+function _rtPushTxnRow(txn) {
+  var tbody = document.getElementById('txnTbody');
+  if (!tbody) return;
+
+  // Remove placeholder
+  var ph = document.getElementById('txnPlaceholder');
+  if (ph) ph.remove();
+
+  var score = txn.risk_score || 0;
+  var status = txn.status || 'SAFE';
+  var levelMap = { SAFE: 'safe', CAUTION: 'caution', DANGER: 'danger', BLOCKED: 'danger' };
+  var level = levelMap[status] || 'safe';
+
+  var scoreColor = level === 'danger' ? 'var(--danger)' : level === 'caution' ? 'var(--caution)' : 'var(--safe)';
+  var statusBg   = level === 'danger' ? 'var(--danger-bg)'  : level === 'caution' ? 'var(--caution-bg)'  : 'var(--safe-bg)';
+  var statusFg   = level === 'danger' ? 'var(--danger)'     : level === 'caution' ? 'var(--caution)'     : 'var(--safe)';
+
+  var amt = txn.amount ? '$' + Number(txn.amount).toFixed(2) : '—';
+
+  var tr = document.createElement('tr');
+  tr.style.animation = 'feedFlash 1.5s ease-out forwards';
+  tr.innerHTML =
+    '<td class="td-mono">' + esc(txn.txn_id || '—') + '</td>' +
+    '<td style="font-size:12.5px">' + esc(txn.merchant || '—') + '</td>' +
+    '<td style="font-size:12.5px;font-family:\'DM Mono\',monospace">' + amt + '</td>' +
+    '<td style="font-size:12.5px">' + esc(txn.country || '—') + '</td>' +
+    '<td><span class="kind-tag" style="background:' + statusBg + ';color:' + statusFg + '">' + esc(status) + '</span></td>' +
+    '<td><span style="font-weight:700;color:' + scoreColor + '">' + score + '</span>' +
+      '<div class="meter" style="height:4px;margin-top:3px;width:56px"><div class="meter-fill ' + level + '" style="width:' + score + '%"></div></div></td>';
+
+  tbody.insertBefore(tr, tbody.firstChild);
+
+  // Keep max rows
+  while (tbody.rows.length > _TXN_MAX) tbody.deleteRow(tbody.rows.length - 1);
+
+  // Update dot + counter label
+  var dot = document.getElementById('txnDot');
+  if (dot) dot.style.background = 'var(--safe)';
+  var lbl = document.getElementById('txnCountLabel');
+  if (lbl) lbl.textContent = _rtTxnTotal + ' received';
+}
+
+// ── Separate WS for transaction table (does not affect existing feed/ticker) ──
+var _wsTxnTable = null, _wsTxnTableRetry = 0;
+
+function _wsTxnTableConnect() {
+  var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  _wsTxnTable = new WebSocket(proto + '//' + location.host + '/ws/transactions');
+
+  _wsTxnTable.onopen = function() {
+    _wsTxnTableRetry = 0;
+    _wsTxnTable._ping = setInterval(function() {
+      if (_wsTxnTable.readyState === 1) _wsTxnTable.send('ping');
+    }, 25000);
+  };
+
+  _wsTxnTable.onmessage = function(e) {
+    var txn;
+    try { txn = JSON.parse(e.data); } catch(ex) { return; }
+    if (txn.type === 'pong' || txn.type === 'heartbeat') return;
+
+    _rtTxnTotal++;
+
+    if (txn.status === 'BLOCKED') {
+      _rtBlocked++;
+      _beep(440, 0.4, 0.2);
+      _desktopNotif('🚨 Transaction BLOCKED', txn.txn_id + ' — ' + (txn.reason || ''));
+    } else if (txn.status === 'DANGER' && (txn.risk_score || 0) >= 70) {
+      _rtDanger++;
+      _beep(660, 0.2, 0.1);
+      _desktopNotif('⚠️ High-Risk Transaction', txn.txn_id + ' · score ' + txn.risk_score);
+    }
+
+    _rtUpdateCounters();
+    _rtPushTxnRow(txn);
+  };
+
+  _wsTxnTable.onclose = function() {
+    clearInterval(_wsTxnTable._ping);
+    var delay = Math.min(30000, 1000 * Math.pow(2, _wsTxnTableRetry++));
+    setTimeout(_wsTxnTableConnect, delay);
+  };
+
+  _wsTxnTable.onerror = function() { _wsTxnTable.close(); };
+}
+
+// ── Separate WS for system health bars ────────────────────────
+var _wsSysHealth = null, _wsSysHealthRetry = 0;
+
+function _wsSysHealthConnect() {
+  var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  _wsSysHealth = new WebSocket(proto + '//' + location.host + '/ws/system');
+
+  _wsSysHealth.onopen = function() {
+    _wsSysHealthRetry = 0;
+    _wsSysHealth._ping = setInterval(function() {
+      if (_wsSysHealth.readyState === 1) _wsSysHealth.send('ping');
+    }, 25000);
+  };
+
+  _wsSysHealth.onmessage = function(e) {
+    var m;
+    try { m = JSON.parse(e.data); } catch(ex) { return; }
+    if (m.type === 'pong' || m.type === 'heartbeat') return;
+
+    function setBar(barId, valId, pct) {
+      var bar = document.getElementById(barId);
+      var val = document.getElementById(valId);
+      if (bar) {
+        bar.style.width = pct + '%';
+        bar.className = 'meter-fill ' + (pct >= 80 ? 'danger' : pct >= 60 ? 'caution' : 'safe');
+      }
+      if (val) val.textContent = Math.round(pct) + '%';
+    }
+
+    if (m.cpu_pct  !== undefined) setBar('sysCpuBar',  'sysCpuVal',  m.cpu_pct);
+    if (m.mem_pct  !== undefined) setBar('sysMemBar',  'sysMemVal',  m.mem_pct);
+    if (m.disk_pct !== undefined) setBar('sysDiskBar', 'sysDiskVal', m.disk_pct);
+
+    if (m.ws_clients) {
+      var total = Object.values(m.ws_clients).reduce(function(a, b) { return a + b; }, 0);
+      var row = document.getElementById('sysClientsRow');
+      var txt = document.getElementById('sysClientsText');
+      if (row) row.style.display = 'block';
+      if (txt) txt.textContent = total + ' live WebSocket client' + (total !== 1 ? 's' : '') + ' connected';
+    }
+  };
+
+  _wsSysHealth.onclose = function() {
+    clearInterval(_wsSysHealth._ping);
+    var delay = Math.min(30000, 1000 * Math.pow(2, _wsSysHealthRetry++));
+    setTimeout(_wsSysHealthConnect, delay);
+  };
+
+  _wsSysHealth.onerror = function() { _wsSysHealth.close(); };
+}
+
+// Boot new features
+_wsTxnTableConnect();
+_wsSysHealthConnect();
+
+// ═══════════════════════════════════════════════════════════════
+// LIVE TRANSACTIONS PANE
+// ═══════════════════════════════════════════════════════════════
+
+var _ltxnAll     = [];   // full buffer (max 500)
+var _ltxnFilter  = 'ALL';
+var _ltxnPaused  = false;
+var _ltxnCounts  = { SAFE: 0, CAUTION: 0, DANGER: 0, BLOCKED: 0, total: 0 };
+
+// WS feed for the dedicated transactions pane
+var _wsLtxn = null, _wsLtxnRetry = 0;
+
+function _wsLtxnConnect() {
+  var proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+  _wsLtxn = new WebSocket(proto + '//' + location.host + '/ws/transactions');
+  _wsLtxn.onopen = function() {
+    _wsLtxnRetry = 0;
+    _wsLtxn._ping = setInterval(function() { if (_wsLtxn.readyState === 1) _wsLtxn.send('ping'); }, 25000);
+    var dot = document.getElementById('livetxnBadge');
+    if (dot) { dot.style.background = 'var(--safe)'; dot.textContent = '●'; }
+  };
+  _wsLtxn.onmessage = function(e) {
+    var t; try { t = JSON.parse(e.data); } catch(x) { return; }
+    if (t.type === 'pong' || t.type === 'heartbeat') return;
+    if (_ltxnPaused) return;
+
+    // Prepend to buffer
+    _ltxnAll.unshift(t);
+    if (_ltxnAll.length > 500) _ltxnAll.pop();
+
+    // Update counts
+    _ltxnCounts.total++;
+    var s = t.status || 'SAFE';
+    if (_ltxnCounts[s] !== undefined) _ltxnCounts[s]++;
+
+    // Update stat strip
+    document.getElementById('ltxnStatTotal').textContent   = _ltxnCounts.total;
+    document.getElementById('ltxnStatSafe').textContent    = _ltxnCounts.SAFE;
+    document.getElementById('ltxnStatCaution').textContent = _ltxnCounts.CAUTION;
+    document.getElementById('ltxnStatDanger').textContent  = _ltxnCounts.DANGER;
+    document.getElementById('ltxnStatBlocked').textContent = _ltxnCounts.BLOCKED;
+
+    // Only re-render if this pane is visible
+    var pane = document.getElementById('pane-livetxn');
+    if (pane && pane.classList.contains('active')) ltxnRender();
+  };
+  _wsLtxn.onclose = function() {
+    clearInterval(_wsLtxn._ping);
+    setTimeout(_wsLtxnConnect, Math.min(30000, 1000 * Math.pow(2, _wsLtxnRetry++)));
+  };
+  _wsLtxn.onerror = function() { _wsLtxn.close(); };
+}
+
+function ltxnSetFilter(f) {
+  _ltxnFilter = f;
+  // Update button styles
+  ['ALL','SAFE','CAUTION','DANGER','BLOCKED'].forEach(function(k) {
+    var btn = document.getElementById('ltxnFilter' + k.charAt(0) + k.slice(1).toLowerCase());
+    if (!btn) return;
+    btn.style.borderColor = k === f ? 'var(--accent)' : '';
+    btn.style.color       = k === f ? 'var(--accent)' : '';
+  });
+  ltxnRender();
+}
+
+function ltxnTogglePause() {
+  _ltxnPaused = !_ltxnPaused;
+  var btn = document.getElementById('ltxnPauseBtn');
+  if (btn) btn.textContent = _ltxnPaused ? '▶ Resume' : '⏸ Pause';
+}
+
+function ltxnClear() {
+  _ltxnAll = [];
+  _ltxnCounts = { SAFE: 0, CAUTION: 0, DANGER: 0, BLOCKED: 0, total: 0 };
+  ['ltxnStatTotal','ltxnStatSafe','ltxnStatCaution','ltxnStatDanger','ltxnStatBlocked'].forEach(function(id) {
+    var el = document.getElementById(id); if (el) el.textContent = '0';
+  });
+  document.getElementById('ltxnTbody').innerHTML =
+    '<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--muted2)">📡 Waiting for transactions…</td></tr>';
+  document.getElementById('ltxnDetail').style.display = 'none';
+}
+
+function ltxnRender() {
+  var q = (document.getElementById('ltxnSearch').value || '').toLowerCase();
+  var rows = _ltxnAll.filter(function(t) {
+    if (_ltxnFilter !== 'ALL' && t.status !== _ltxnFilter) return false;
+    if (q) {
+      var hay = ((t.txn_id||'') + (t.merchant||'') + (t.country||'') + (t.ip||'')).toLowerCase();
+      if (hay.indexOf(q) === -1) return false;
+    }
+    return true;
+  });
+
+  var levelMap = { SAFE:'safe', CAUTION:'caution', DANGER:'danger', BLOCKED:'danger' };
+  var html = rows.slice(0, 200).map(function(t) {
+    var lv  = levelMap[t.status] || 'safe';
+    var sc  = t.risk_score || 0;
+    var scColor  = lv==='danger' ? 'var(--danger)' : lv==='caution' ? 'var(--caution)' : 'var(--safe)';
+    var stBg     = lv==='danger' ? 'var(--danger-bg)' : lv==='caution' ? 'var(--caution-bg)' : 'var(--safe-bg)';
+    var stFg     = lv==='danger' ? 'var(--danger)'    : lv==='caution' ? 'var(--caution)'    : 'var(--safe)';
+    var amt      = t.amount ? '$' + Number(t.amount).toFixed(2) : '—';
+    var ts       = t.timestamp ? new Date(t.timestamp * 1000).toLocaleTimeString() : '—';
+    var simTag   = t._sim ? '<span style="font-size:9px;background:#FEF3C7;color:#92400E;padding:1px 5px;border-radius:3px;margin-left:4px">SIM</span>' : '';
+    return '<tr style="cursor:pointer" onclick="ltxnShowDetail(' + JSON.stringify(t).replace(/"/g,'&quot;') + ')">' +
+      '<td class="td-mono">' + esc(t.txn_id||'—') + simTag + '</td>' +
+      '<td style="font-size:12.5px">' + esc(t.merchant||'—') + '</td>' +
+      '<td style="font-family:\'DM Mono\',monospace;font-size:12px">' + amt + '</td>' +
+      '<td style="font-size:12.5px">' + esc(t.country||'—') + '</td>' +
+      '<td style="font-size:12px">' + esc(t.payment_method||'—') + '</td>' +
+      '<td><span class="kind-tag" style="background:' + stBg + ';color:' + stFg + '">' + esc(t.status||'—') + '</span></td>' +
+      '<td><span style="font-weight:700;color:' + scColor + '">' + sc + '</span>' +
+        '<div class="meter" style="height:4px;margin-top:3px;width:60px"><div class="meter-fill ' + lv + '" style="width:' + sc + '%"></div></div></td>' +
+      '<td class="td-mono" style="font-size:11px">' + ts + '</td>' +
+      '</tr>';
+  }).join('') || '<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--muted2)">No results</td></tr>';
+
+  document.getElementById('ltxnTbody').innerHTML = html;
+}
+
+function ltxnShowDetail(t) {
+  var lv = { SAFE:'safe', CAUTION:'caution', DANGER:'danger', BLOCKED:'danger' }[t.status] || 'safe';
+  var sc = t.risk_score || 0;
+  var scColor = lv==='danger'?'var(--danger)':lv==='caution'?'var(--caution)':'var(--safe)';
+  var fields = [
+    ['Txn ID',         t.txn_id],
+    ['Merchant',       t.merchant],
+    ['Amount',         t.amount ? '$'+Number(t.amount).toFixed(2) : '—'],
+    ['Currency',       t.currency],
+    ['Country',        t.country],
+    ['IP Address',     t.ip],
+    ['Device',         t.device],
+    ['Payment Method', t.payment_method],
+    ['Status',         t.status],
+    ['Risk Score',     sc + ' / 100'],
+    ['Reason',         t.reason],
+    ['Timestamp',      t.timestamp ? new Date(t.timestamp*1000).toLocaleString() : '—'],
+    ['Simulation',     t._sim ? 'Yes — ' + (t._scenario||'') : 'No'],
+  ];
+  var rows = fields.map(function(f) {
+    return '<div style="display:flex;gap:12px;padding:5px 0;border-bottom:1px solid var(--border)">' +
+      '<span style="width:130px;flex-shrink:0;color:var(--muted);font-size:12px">' + f[0] + '</span>' +
+      '<span style="font-size:12.5px;color:var(--text2)">' + esc(String(f[1]||'—')) + '</span></div>';
+  }).join('');
+  var sc_html = '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">' +
+    '<span style="font-size:28px;font-weight:800;color:' + scColor + '">' + sc + '</span>' +
+    '<span class="badge ' + lv + '">' + (t.status||'—') + '</span></div>' +
+    '<div class="meter" style="margin-bottom:14px"><div class="meter-fill ' + lv + '" style="width:' + sc + '%"></div></div>';
+  document.getElementById('ltxnDetailBody').innerHTML = sc_html + rows;
+  document.getElementById('ltxnDetail').style.display = 'block';
+  document.getElementById('ltxnDetail').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+_wsLtxnConnect();
+
+// ═══════════════════════════════════════════════════════════════
+// SIMULATION LAB
+// ═══════════════════════════════════════════════════════════════
+
+var _simRuns = 0, _simEvents = 0;
+
+var _SIM_LABELS = {
+  phishing_campaign:    'Phishing Campaign',
+  bot_attack:           'Bot Attack',
+  credential_stuffing:  'Credential Stuffing',
+  transaction_burst:    'Transaction Burst',
+  coordinated_campaign: 'Coordinated Campaign',
+  ato_attack:           'Account Takeover',
+  carding_test:         'Card Testing',
+};
+
+function simRun(scenario) {
+  var btn = document.getElementById('simBtn-' + scenario);
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+  var status = document.getElementById('simStatus');
+  if (status) status.textContent = '⏳ Running ' + (_SIM_LABELS[scenario] || scenario) + '…';
+
+  var token = localStorage.getItem('fraudx_token') || '';
+  fetch('/api/simulate/trigger', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+    body: JSON.stringify({ scenario: scenario, broadcast: true })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+
+    var label = _SIM_LABELS[scenario] || scenario;
+    var summary = data.summary || {};
+    // event_count is the correct field; fall back to counting the events array
+    var eventCount = typeof summary.event_count === 'number'
+      ? summary.event_count
+      : (Array.isArray(summary.events) ? summary.events.length : 0);
+
+    _simRuns++;
+    _simEvents += eventCount;
+
+    var el = document.getElementById('simStatRuns');  if (el) el.textContent = _simRuns;
+    el = document.getElementById('simStatEvents');    if (el) el.textContent = _simEvents;
+    el = document.getElementById('simStatLast');      if (el) el.textContent = label;
+    el = document.getElementById('simStatSummary');
+    if (el) {
+      var parts = [eventCount + ' events', 'seed ' + (data.seed || 0)];
+      if (summary.true_frauds !== undefined) parts.push(summary.true_frauds + ' frauds');
+      if (typeof summary.mean_score === 'number') parts.push('avg score ' + summary.mean_score);
+      if (typeof summary.peak_score === 'number') parts.push('peak ' + summary.peak_score);
+      el.textContent = parts.join(' · ');
+    }
+    if (status) status.textContent = '✅ Done — ' + eventCount + ' events broadcast';
+
+    // Push to sim feed
+    _simFeedPush(label, scenario, summary, eventCount);
+    toast('🧪 ' + label + ' launched — ' + eventCount + ' events in stream', 'caution');
+  })
+  .catch(function(err) {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+    if (status) status.textContent = '❌ Error: ' + (err.message || 'request failed');
+    toast('Simulation failed: ' + (err.message || ''), 'danger');
+  });
+}
+
+function _simFeedPush(label, scenario, summary, eventCount) {
+  var feed = document.getElementById('simFeed');
+  if (!feed) return;
+  var empty = feed.querySelector('.empty');
+  if (empty) empty.remove();
+
+  var icons = {
+    phishing_campaign: '🎣', bot_attack: '🤖', credential_stuffing: '🔑',
+    transaction_burst: '💸', coordinated_campaign: '🕸', ato_attack: '🔓', carding_test: '💳'
+  };
+  var icon = icons[scenario] || '🧪';
+  var ts   = new Date().toLocaleTimeString();
+  // Build a clean sub-line from numeric summary fields only
+  var subParts = [];
+  if (summary.true_frauds !== undefined) subParts.push(summary.true_frauds + ' frauds');
+  if (typeof summary.mean_score === 'number') subParts.push('avg ' + summary.mean_score);
+  if (typeof summary.peak_score === 'number') subParts.push('peak ' + summary.peak_score);
+  var sub = subParts.join(' · ');
+
+  var div = document.createElement('div');
+  div.className = 'feed-item ws-new';
+  div.innerHTML =
+    '<div class="feed-score danger" style="font-size:18px;background:var(--danger-bg);color:var(--danger)">' + icon + '</div>' +
+    '<div style="flex:1;min-width:0">' +
+      '<div class="feed-kind">' + esc(scenario.replace(/_/g,' ').toUpperCase()) + '</div>' +
+      '<div class="feed-target">' + esc(label) + ' — ' + eventCount + ' events broadcast</div>' +
+      (sub ? '<div style="font-size:11px;color:var(--caution);margin-top:2px">' + sub + '</div>' : '') +
+      '<div class="feed-time">' + ts + '</div>' +
+    '</div>' +
+    '<span class="badge caution">RAN</span>';
+  feed.insertBefore(div, feed.firstChild);
+  while (feed.children.length > 30) feed.removeChild(feed.lastChild);
+}
+</script>
+</body>
+</html>

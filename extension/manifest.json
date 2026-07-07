@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "FRAUD-X Shield",
+  "version": "3.0.0",
+  "description": "Enterprise AI-powered cybersecurity: real-time phishing detection, payment gateway verification, behavioral biometrics, threat intelligence & adaptive fraud response.",
+
+  "permissions": [
+    "tabs",
+    "webNavigation",
+    "storage",
+    "activeTab",
+    "scripting",
+    "contextMenus",
+    "alarms",
+    "notifications",
+    "webRequest"
+  ],
+  "host_permissions": [
+    "http://localhost:8000/*",
+    "http://127.0.0.1:8000/*",
+    "http://*/*",
+    "https://*/*"
+  ],
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FRAUD-X Shield"
+  }
+}

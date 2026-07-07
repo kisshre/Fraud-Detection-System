@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>FRAUD-X Shield</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  width:380px;min-height:240px;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  font-size:13px;background:#F8F9FB;color:#111827;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.header{
+  background:linear-gradient(135deg,#1e40af,#5b21b6,#7c3aed);
+  padding:12px 16px;display:flex;align-items:center;gap:10px;
+}
+.header-icon{font-size:22px;animation:pulse-shield 3s ease-in-out infinite}
+@keyframes pulse-shield{0%,100%{filter:drop-shadow(0 0 0 transparent)}50%{filter:drop-shadow(0 0 6px rgba(167,139,250,.7))}}
+.header-title{color:#fff;font-size:15px;font-weight:800;letter-spacing:-.2px}
+.header-sub{color:rgba(255,255,255,.65);font-size:10.5px;margin-top:1px}
+.header-version{margin-left:auto;font-size:9.5px;color:rgba(255,255,255,.45);
+  background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px;letter-spacing:.3px}
+
+/* ── Tab bar ─────────────────────────────────────────────────── */
+.tab-bar{display:flex;border-bottom:2px solid #E5E7EB;background:#fff}
+.tab-btn{
+  flex:1;padding:8px 4px;font-size:11px;font-weight:600;
+  color:#6B7280;background:none;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-2px;
+  font-family:inherit;transition:color .12s,border-color .12s;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+}
+.tab-btn .tab-icon{font-size:13px}
+.tab-btn.active{color:#2563EB;border-bottom-color:#2563EB}
+.tab-btn:hover:not(.active){color:#374151}
+.tab-pane{display:none}
+.tab-pane.active{display:block}
+
+/* ── Risk hero card ──────────────────────────────────────────── */
+.risk-hero{
+  padding:14px 16px;background:#fff;border-bottom:1px solid #E5E7EB;
+  display:flex;align-items:center;gap:14px;
+}
+.risk-ring{
+  position:relative;min-width:56px;height:56px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:3px solid #E5E7EB;flex-shrink:0;background:#F9FAFB;
+  transition:border-color .3s;
+}
+.risk-ring.danger {border-color:#DC2626;background:#FEF2F2}
+.risk-ring.high   {border-color:#C05621;background:#FFF7ED}
+.risk-ring.caution{border-color:#D97706;background:#FFFBEB}
+.risk-ring.safe   {border-color:#059669;background:#ECFDF5}
+.risk-ring.pending{border-color:#D1D5DB;background:#F3F4F6}
+.risk-score{font-size:18px;font-weight:900;line-height:1}
+.risk-score.danger {color:#DC2626}
+.risk-score.high   {color:#C05621}
+.risk-score.caution{color:#D97706}
+.risk-score.safe   {color:#059669}
+.risk-score.pending{color:#9CA3AF}
+.risk-label{font-size:8px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+.risk-info{flex:1;min-width:0}
+.risk-level-pill{
+  display:inline-flex;align-items:center;gap:4px;padding:3px 9px;
+  border-radius:999px;font-size:10.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;
+}
+.risk-level-pill.danger {background:#FEF2F2;color:#DC2626;border:1px solid #FECACA}
+.risk-level-pill.high   {background:#FFF7ED;color:#C05621;border:1px solid #FDBA74}
+.risk-level-pill.caution{background:#FFFBEB;color:#D97706;border:1px solid #FDE68A}
+.risk-level-pill.safe   {background:#ECFDF5;color:#059669;border:1px solid #A7F3D0}
+.risk-level-pill.pending{background:#F3F4F6;color:#9CA3AF;border:1px solid #E5E7EB}
+.risk-url{font-size:11px;color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.risk-threat{font-size:11.5px;color:#374151;margin-top:2px;font-weight:500}
+
+/* ── Signal badges ───────────────────────────────────────────── */
+.signals-row{display:flex;flex-wrap:wrap;gap:4px;padding:6px 16px 10px;background:#fff}
+.signal-chip{
+  font-size:9.5px;font-weight:600;padding:2px 7px;border-radius:999px;
+  display:inline-flex;align-items:center;gap:3px;
+}
+.signal-chip.danger {background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
+.signal-chip.high   {background:#FFF7ED;color:#7C2D12;border:1px solid #FDBA74}
+.signal-chip.caution{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}
+.signal-chip.info   {background:#EFF6FF;color:#1e40af;border:1px solid #BFDBFE}
+
+/* ── Payment protection ──────────────────────────────────────── */
+.payment-section{padding:10px 16px;border-bottom:1px solid #E5E7EB;background:#fff}
+.section-title{font-size:10.5px;font-weight:700;color:#9CA3AF;
+  text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;
+  display:flex;align-items:center;gap:6px}
+.payment-badge{
+  display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-radius:10px;border:1.5px solid #E5E7EB;background:#F9FAFB;
+}
+.payment-badge.trusted{background:#ECFDF5;border-color:#059669}
+.payment-badge.danger {background:#FEF2F2;border-color:#DC2626}
+.payment-badge.caution{background:#FFFBEB;border-color:#D97706}
+.pmt-icon{font-size:24px;flex-shrink:0}
+.pmt-info{flex:1;min-width:0}
+.pmt-status{font-size:12.5px;font-weight:700;margin-bottom:2px}
+.pmt-status.trusted{color:#065F46}
+.pmt-status.danger {color:#DC2626}
+.pmt-status.caution{color:#92400E}
+.pmt-detail{font-size:11px;color:#6B7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pmt-score{font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:6px;flex-shrink:0}
+.pmt-score.trusted{background:#ECFDF5;color:#059669;border:1px solid #A7F3D0}
+.pmt-score.danger {background:#FEF2F2;color:#DC2626;border:1px solid #FCA5A5}
+.pmt-score.caution{background:#FFFBEB;color:#D97706;border:1px solid #FDE68A}
+
+/* ── Stats row (velocity + device) ──────────────────────────── */
+.stats-row{display:flex;padding:0;border-bottom:1px solid #E5E7EB;background:#fff}
+.stat-card{
+  flex:1;padding:10px 14px;display:flex;flex-direction:column;gap:3px;
+  border-right:1px solid #E5E7EB;
+}
+.stat-card:last-child{border-right:none}
+.stat-label{font-size:9.5px;font-weight:700;color:#9CA3AF;text-transform:uppercase;letter-spacing:.5px}
+.stat-value{font-size:14px;font-weight:800;color:#111827;line-height:1.2}
+.stat-sub{font-size:10px;color:#9CA3AF}
+
+/* ── Action buttons ──────────────────────────────────────────── */
+.actions-row{display:flex;gap:8px;padding:10px 16px;background:#fff;border-bottom:1px solid #E5E7EB}
+.btn{
+  flex:1;padding:7px 10px;border:none;border-radius:7px;
+  font-size:11.5px;font-weight:600;cursor:pointer;
+  font-family:inherit;transition:filter .12s;
+}
+.btn:hover{filter:brightness(.92)}
+.btn:disabled{opacity:.5;cursor:not-allowed;filter:none}
+.btn-scan{background:#2563EB;color:#fff}
+.btn-pay {background:#7C3AED;color:#fff}
+.btn-ignore{background:#F3F4F6;color:#374151;border:1px solid #E5E7EB}
+.btn-ignore.active{background:#FEF2F2;color:#DC2626;border-color:#FECACA}
+
+/* ── Ignore banner ───────────────────────────────────────────── */
+.ignore-notice{
+  display:none;margin:0 16px 10px;padding:8px 10px;
+  background:#FEF9C3;border:1px solid #FDE68A;border-radius:8px;
+  font-size:11px;color:#92400E;text-align:center;
+}
+.ignore-notice.show{display:block}
+
+/* ── Recent threats list ─────────────────────────────────────── */
+.list-header{font-size:10.5px;font-weight:700;color:#9CA3AF;
+  text-transform:uppercase;letter-spacing:.7px;padding:10px 16px 4px}
+.threat-item{
+  display:flex;align-items:center;gap:8px;padding:7px 16px;
+  border-bottom:1px solid #F3F4F6;background:#fff;transition:background .1s;cursor:default;
+}
+.threat-item:hover{background:#F9FAFB}
+.threat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.threat-dot.danger {background:#DC2626}
+.threat-dot.caution{background:#D97706}
+.threat-dot.safe   {background:#059669}
+.threat-host{font-size:11.5px;color:#374151;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;flex:1;min-width:0}
+.threat-kind{font-size:9px;color:#9CA3AF;background:#F3F4F6;padding:1px 5px;
+  border-radius:4px;flex-shrink:0}
+.threat-score{font-size:11px;font-weight:700;flex-shrink:0}
+.threat-score.danger {color:#DC2626}
+.threat-score.caution{color:#D97706}
+.threat-score.safe   {color:#059669}
+.threat-time{font-size:10px;color:#9CA3AF;flex-shrink:0}
+
+/* ── AI Chat pane ────────────────────────────────────────────── */
+.chat-container{display:flex;flex-direction:column;height:340px}
+.chat-log{
+  flex:1;overflow-y:auto;padding:12px 14px;
+  display:flex;flex-direction:column;gap:8px;background:#F9FAFB;
+}
+.chat-msg{
+  max-width:88%;padding:8px 11px;border-radius:12px;
+  font-size:12px;line-height:1.45;word-break:break-word;
+}
+.chat-msg.user{align-self:flex-end;background:#2563EB;color:#fff;border-radius:12px 12px 3px 12px}
+.chat-msg.bot {align-self:flex-start;background:#fff;color:#111827;
+  border:1px solid #E5E7EB;border-radius:12px 12px 12px 3px}
+.chat-msg.bot.typing{color:#9CA3AF;font-style:italic}
+.chat-input-row{
+  display:flex;gap:6px;padding:10px 12px;border-top:1px solid #E5E7EB;background:#fff;
+}
+.chat-input{
+  flex:1;padding:7px 10px;border:1px solid #D1D5DB;border-radius:8px;
+  font-size:12px;outline:none;font-family:inherit;
+}
+.chat-input:focus{border-color:#2563EB}
+.chat-send{
+  padding:7px 14px;background:#2563EB;color:#fff;border:none;border-radius:8px;
+  font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
+}
+.chat-send:disabled{background:#9CA3AF;cursor:not-allowed}
+.chat-context{
+  padding:6px 14px;font-size:10.5px;color:#6B7280;background:#F3F4F6;
+  border-bottom:1px solid #E5E7EB;display:flex;align-items:center;gap:6px;
+}
+.chat-context-badge{
+  font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;
+}
+
+/* ── Settings pane ───────────────────────────────────────────── */
+.settings-pane{padding:12px 16px}
+.settings-group{margin-bottom:16px}
+.settings-label{font-size:10.5px;font-weight:700;color:#9CA3AF;
+  text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px}
+.settings-field{
+  display:flex;gap:8px;align-items:center;margin-bottom:8px;
+}
+.settings-field input[type=text]{
+  flex:1;padding:7px 10px;border:1px solid #D1D5DB;border-radius:7px;
+  font-size:12px;outline:none;font-family:inherit;
+}
+.settings-field input[type=text]:focus{border-color:#2563EB}
+.settings-field label{font-size:12px;color:#374151;flex:1}
+.settings-field input[type=checkbox]{width:15px;height:15px;accent-color:#2563EB}
+.btn-save{padding:6px 14px;background:#2563EB;color:#fff;border:none;
+  border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.btn-save:hover{background:#1d4ed8}
+.settings-info{font-size:10.5px;color:#9CA3AF;margin-top:4px;line-height:1.45}
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.footer{
+  padding:8px 14px;background:#F3F4F6;border-top:1px solid #E5E7EB;
+  display:flex;align-items:center;gap:6px;font-size:11px;color:#6B7280;
+}
+.dot-live{width:7px;height:7px;border-radius:50%;background:#059669;animation:pulse-dot 2s infinite}
+.dot-offline{width:7px;height:7px;border-radius:50%;background:#DC2626}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+.footer-link{margin-left:auto;color:#2563EB;cursor:pointer;font-weight:600;
+  text-decoration:none;font-size:11px}
+
+/* ── Utility ─────────────────────────────────────────────────── */
+.empty{padding:20px;text-align:center;color:#9CA3AF;font-size:12px}
+</style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<div class="header">
+  <span class="header-icon">🛡️</span>
+  <div>
+    <div class="header-title">FRAUD-X Shield</div>
+    <div class="header-sub">Enterprise AI Fraud Protection</div>
+  </div>
+  <span class="header-version">v3.0</span>
+</div>
+
+<!-- ── Tab bar ─────────────────────────────────────────────── -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="shield">
+    <span class="tab-icon">🛡️</span>Shield
+  </button>
+  <button class="tab-btn" data-tab="threats">
+    <span class="tab-icon">⚠️</span>Threats
+  </button>
+  <button class="tab-btn" data-tab="chat">
+    <span class="tab-icon">🤖</span>AI Chat
+  </button>
+  <button class="tab-btn" data-tab="settings">
+    <span class="tab-icon">⚙️</span>Settings
+  </button>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     Shield Tab
+     ════════════════════════════════════════════════════════════ -->
+<div id="tab-shield" class="tab-pane active">
+
+  <!-- Risk hero -->
+  <div class="risk-hero">
+    <div class="risk-ring pending" id="riskRing">
+      <span class="risk-score pending" id="riskScore">—</span>
+      <span class="risk-label" id="riskLbl" style="color:#9CA3AF">RISK</span>
+    </div>
+    <div class="risk-info">
+      <div><span class="risk-level-pill pending" id="riskPill">Not scanned</span></div>
+      <div class="risk-url" id="riskUrl">Loading…</div>
+      <div class="risk-threat" id="riskThreat" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- Signal chips -->
+  <div class="signals-row" id="signalsRow" style="display:none"></div>
+
+  <!-- Payment section -->
+  <div class="payment-section">
+    <div class="section-title">💳 Payment Protection</div>
+    <div class="payment-badge" id="payBadge">
+      <span class="pmt-icon">🛡️</span>
+      <div class="pmt-info">
+        <div class="pmt-status" id="payStatus" style="color:#6B7280">Not a payment page</div>
+        <div class="pmt-detail" id="payDetail">Navigate to a checkout to activate</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Velocity + Device trust stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Velocity</div>
+      <div class="stat-value" id="velValue">—</div>
+      <div class="stat-sub" id="velSub">pages/min</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Device Trust</div>
+      <div class="stat-value" id="devTrust">—</div>
+      <div class="stat-sub" id="devSub">fingerprint</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">API Status</div>
+      <div class="stat-value" id="apiStatus">—</div>
+      <div class="stat-sub" id="apiSub">endpoint</div>
+    </div>
+  </div>
+
+  <!-- Action buttons -->
+  <div class="actions-row">
+    <button class="btn btn-scan" id="scanBtn">🔍 Scan</button>
+    <button class="btn btn-pay"  id="payBtn">💳 Scan Payment</button>
+    <button class="btn btn-ignore" id="ignoreBtn">🚫 Ignore</button>
+  </div>
+
+  <div class="ignore-notice" id="ignoreNotice">
+    ✅ Scanning paused for this page.
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     Threats Tab
+     ════════════════════════════════════════════════════════════ -->
+<div id="tab-threats" class="tab-pane">
+  <div class="list-header">Recent Scans</div>
+  <div id="threatList">
+    <div class="empty">No scans yet — browse any page!</div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     AI Chat Tab
+     ════════════════════════════════════════════════════════════ -->
+<div id="tab-chat" class="tab-pane">
+  <div class="chat-container">
+    <div class="chat-context" id="chatContext">
+      <span>Context:</span>
+      <span class="chat-context-badge" id="chatCtxBadge"
+        style="background:#F3F4F6;color:#9CA3AF">Loading…</span>
+    </div>
+    <div class="chat-log" id="chatLog">
+      <div class="chat-msg bot">
+        Hi! I'm your AI fraud analyst. Ask me about the current page,
+        suspicious signals, how to stay safe, or any cybersecurity question.
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" id="chatInput" type="text"
+        placeholder="Ask about this site or security…"/>
+      <button class="chat-send" id="chatSend">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════
+     Settings Tab
+     ════════════════════════════════════════════════════════════ -->
+<div id="tab-settings" class="tab-pane">
+  <div class="settings-pane">
+
+    <div class="settings-group">
+      <div class="settings-label">API Server</div>
+      <div class="settings-field">
+        <input type="text" id="apiUrlInput" placeholder="http://localhost:8000"/>
+        <button class="btn-save" id="saveApi">Save</button>
+      </div>
+      <div class="settings-info">
+        FRAUD-X server URL. Default: http://localhost:8000
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-label">Preferences</div>
+      <div class="settings-field">
+        <input type="checkbox" id="notifEnabled" checked/>
+        <label for="notifEnabled">OS notifications for critical threats (81+)</label>
+      </div>
+      <div class="settings-field">
+        <input type="checkbox" id="hudEnabled" checked/>
+        <label for="hudEnabled">Show security HUD on pages</label>
+      </div>
+      <div class="settings-field">
+        <input type="checkbox" id="biometricEnabled" checked/>
+        <label for="biometricEnabled">Behavioral biometrics monitoring</label>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-label">Ignored Pages</div>
+      <div id="ignoredList" style="font-size:11px;color:#6B7280">
+        No ignored pages.
+      </div>
+    </div>
+
+    <div style="padding:10px 0;border-top:1px solid #E5E7EB;margin-top:6px">
+      <div style="font-size:10px;color:#9CA3AF;line-height:1.6">
+        FRAUD-X Shield v3.0 — Enterprise AI-Powered Cybersecurity<br/>
+        Gemini API: server-side only (key never leaves the backend)<br/>
+        Privacy: no card data stored, biometrics processed locally
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Footer ──────────────────────────────────────────────── -->
+<div class="footer">
+  <span class="dot-offline" id="statusDot"></span>
+  <span id="statusText">Checking API…</span>
+  <a class="footer-link" id="openDash" href="#" target="_blank">Dashboard →</a>
+</div>
+
+<script src="popup.js"></script>
+</body>
+</html>
